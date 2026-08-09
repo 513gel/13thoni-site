@@ -19,6 +19,17 @@ Create a repository named `13thoni-site`, commit this project, and push the `mai
 
 Before changing nameservers, open the DNS settings for `13thoni.com` in Squarespace and record every existing DNS entry. Preserve all MX records and every email-related SPF, DKIM, and DMARC TXT/CNAME record. Preserve verification records and active subdomains. If DNSSEC is enabled, disable it before switching nameservers.
 
+### Public records observed on August 9, 2026
+
+These records were visible in a read-only public DNS check and must be accounted for during migration:
+
+- Four Squarespace website A records at the apex: `198.49.23.145`, `198.185.159.144`, `198.185.159.145`, and `198.49.23.144`.
+- `www` CNAME: `ext-sq.squarespace.com`.
+- Google mail MX: priority `1`, target `smtp.google.com`.
+- Google verification TXT: `google-site-verification=BCRQziD-l-JYrvJTuDFEldlZdfyNOpvZINNFeDGEjf8`.
+
+The Squarespace website A records and `www` CNAME will eventually be replaced by the new host's records. The Google MX and verification TXT records must be copied to Cloudflare before the nameserver switch. Public lookups did not reveal common `_dmarc`, `google._domainkey`, or `default._domainkey` records, but the Squarespace DNS panel remains the source of truth because other selectors or records may exist.
+
 ## 4. Add 13thoni.com to Cloudflare DNS
 
 1. In Cloudflare, choose **Add a domain** and enter `13thoni.com`.
