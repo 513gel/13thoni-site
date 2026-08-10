@@ -278,7 +278,23 @@ button {
   color: var(--ink);
   cursor: crosshair;
   text-align: left;
+  text-decoration: none;
   transition: color 90ms, border-color 90ms, background 90ms;
+}
+
+.target-node--online {
+  border-color: rgba(227, 34, 50, 0.82);
+  box-shadow: inset 0 0 20px rgba(227, 34, 50, 0.08), 0 0 14px rgba(227, 34, 50, 0.1);
+}
+
+.target-node--online::before,
+.target-node--online::after {
+  border-color: var(--signal);
+}
+
+.target-node--online .node-state {
+  color: var(--signal);
+  opacity: 1;
 }
 
 .target-node::before,

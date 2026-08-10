@@ -34,6 +34,16 @@ const worker = {
       return Response.redirect(url.toString(), 301);
     }
 
+    if (url.pathname === "/MOTTLE") {
+      url.pathname = "/MOTTLE/";
+      return Response.redirect(url.toString(), 308);
+    }
+
+    if (url.pathname === "/MOTTLE/") {
+      url.pathname = "/MOTTLE/index.html";
+      return env.ASSETS.fetch(new Request(url, request));
+    }
+
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {

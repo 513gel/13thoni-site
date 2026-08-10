@@ -12,10 +12,10 @@ const bootLines = [
 ];
 
 const nodes = [
-  { id: "01", label: "ARCHIVE", className: "node--archive" },
-  { id: "02", label: "SIGNALS", className: "node--signals" },
-  { id: "03", label: "ENTITY", className: "node--entity" },
-  { id: "04", label: "COMMS", className: "node--comms" },
+  { id: "01", label: "MOTTLE", className: "node--archive", href: "/MOTTLE/" },
+  { id: "02", label: "SIGNALS", className: "node--signals", href: null },
+  { id: "03", label: "ENTITY", className: "node--entity", href: null },
+  { id: "04", label: "COMMS", className: "node--comms", href: null },
 ];
 
 export default function Home() {
@@ -94,19 +94,36 @@ export default function Home() {
             <div className="scan-line" />
           </div>
 
-          {nodes.map((node) => (
-            <button
-              key={node.id}
-              className={`target-node ${node.className}`}
-              type="button"
-              onClick={() => probeNode(node.label)}
-              aria-label={`${node.label}: not yet available`}
-            >
-              <span className="node-index">TARGET {node.id}</span>
-              <span className="node-label">{node.label}</span>
-              <span className="node-state">[ LOCKED ]</span>
-            </button>
-          ))}
+          {nodes.map((node) => {
+            const contents = (
+              <>
+                <span className="node-index">TARGET {node.id}</span>
+                <span className="node-label">{node.label}</span>
+                <span className="node-state">[ {node.href ? "OPEN" : "LOCKED"} ]</span>
+              </>
+            );
+
+            return node.href ? (
+              <a
+                key={node.id}
+                className={`target-node target-node--online ${node.className}`}
+                href={node.href}
+                aria-label={`Open ${node.label}`}
+              >
+                {contents}
+              </a>
+            ) : (
+              <button
+                key={node.id}
+                className={`target-node ${node.className}`}
+                type="button"
+                onClick={() => probeNode(node.label)}
+                aria-label={`${node.label}: not yet available`}
+              >
+                {contents}
+              </button>
+            );
+          })}
         </div>
 
         <footer className="terminal-footer" aria-live="polite">
