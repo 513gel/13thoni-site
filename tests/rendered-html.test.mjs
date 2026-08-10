@@ -55,4 +55,8 @@ test("ships the Mottle source as a public deployment asset", async () => {
   const html = await readFile(new URL("../public/MOTTLE/index.html", import.meta.url), "utf8");
   assert.match(html, /<title>MOTTLE<\/title>/i);
   assert.ok(html.length > 500_000);
+  assert.match(html, /page:5, sel:"#temporalAdd,#previewBtn"/);
+  assert.match(html, /page:7, sel:"#catModeRow,#catModeToggle"/);
+  assert.match(html, /function obReveal\(el,done\)/);
+  assert.match(html, /page\.scrollTop=Math\.max\(0,centered\)/);
 });

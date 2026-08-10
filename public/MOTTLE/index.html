@@ -5745,10 +5745,10 @@ const ONBOARD_STEPS=[
   {page:2, sel:"#filtStage", text:"Filters can run PRE (grade the source before dithering) or OUT (grade the dithered result). Same idea as effect stages."},
   {page:4, sel:"#fxadd", text:"Stack effects — pixel melts, matrix code, cartoon ink, glitches, and more, in categorized groups. Each has dials, opacity, stage, and its own mask."},
   {page:4, sel:"#fxlist", text:"On each effect: FREEZE locks it perfectly still across animation frames, Randomize rolls fresh dials every tap, and PRE/OVR/OUT sets where it enters the pipeline."},
-  {page:5, sel:"#timeline", text:"MOTION: temporal modules animate the image or drive effect dials; scrub and preview frames here."},
+  {page:5, sel:"#temporalAdd,#previewBtn", text:"MOTION: temporal modules animate the image or drive effect dials; add a motion effect here, then preview or scrub its frames."},
   {page:6, sel:"#save", text:"Export PNG, GIF, video — or true vector SVG when using the dot-based algorithms."},
   {page:null, sel:"#zoomBtn", text:"Pinch the canvas to zoom (it anchors under your fingers). Two-finger swipe left/right = undo/redo. This button cycles Fit, 1:1, 2x, 4x."},
-  {page:7, sel:"#catModeToggle", text:"CAT MODE is optional and disabled by default. Enable it to place a restrained animated pixel cat inside the application header."},
+  {page:7, sel:"#catModeRow,#catModeToggle", text:"CAT MODE is optional and disabled by default. Enable it to place a restrained animated pixel cat inside the application header."},
   {page:null, sel:"#helpBtn", text:"That's the tour — replay it any time from this button."},
 ];
 let obIdx=0;
@@ -5758,9 +5758,24 @@ function obPlaceAt(el){
   box.style.left=(r.left-4)+"px"; box.style.top=(r.top-4)+"px";
   box.style.width=(r.width+8)+"px"; box.style.height=(r.height+8)+"px";
   const card=$("obCard");
-  let top=r.bottom+12, left=clamp(r.left,10,innerWidth-270);
-  if(top+150>innerHeight) top=Math.max(10,r.top-150);
+  const margin=10, gap=12, cardW=card.offsetWidth, cardH=card.offsetHeight;
+  const maxLeft=Math.max(margin,innerWidth-cardW-margin);
+  let left=clamp(r.left,margin,maxLeft), top=r.bottom+gap;
+  if(top+cardH>innerHeight-margin) top=r.top-cardH-gap;
+  if(top<margin) top=clamp((innerHeight-cardH)/2,margin,Math.max(margin,innerHeight-cardH-margin));
   card.style.top=top+"px"; card.style.left=left+"px";
+}
+function obReveal(el,done){
+  const page=el.closest(".page");
+  if(page){
+    const pr=page.getBoundingClientRect(),r=el.getBoundingClientRect();
+    const inset=16;
+    if(r.top<pr.top+inset||r.bottom>pr.bottom-inset){
+      const centered=r.top-pr.top+page.scrollTop-(page.clientHeight-r.height)/2;
+      page.scrollTop=Math.max(0,centered);
+    }
+  }
+  requestAnimationFrame(()=>requestAnimationFrame(done));
 }
 function obShow(i){
   const step=ONBOARD_STEPS[i];
@@ -5771,7 +5786,7 @@ function obShow(i){
     $("obStep").textContent="Step "+(i+1)+" of "+ONBOARD_STEPS.length;
     $("obText").textContent=step.text;
     $("obNext").textContent = i===ONBOARD_STEPS.length-1 ? "Done" : "Next";
-    obPlaceAt(el);
+    obReveal(el,()=>obPlaceAt(el));
   };
   if(step.page!=null && step.page!==curPage){ goPage(step.page,true); setTimeout(after,300); }
   else after();
