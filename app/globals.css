@@ -21,8 +21,13 @@ body {
 }
 
 body {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   font-family: var(--font-mono), "Courier New", monospace;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 button {
@@ -345,6 +350,106 @@ button {
 .coordinate--x { top: 3%; left: 50%; transform: translateX(-50%); }
 .coordinate--y { top: 50%; right: -55px; transform: rotate(90deg); }
 
+.signal-archive {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  align-content: center;
+  min-height: min(720px, 100dvh);
+  padding: clamp(42px, 8vh, 92px) clamp(18px, 7vw, 112px);
+  border-top: 1px solid var(--line);
+  background:
+    linear-gradient(rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.022) 1px, transparent 1px),
+    radial-gradient(circle at 76% 42%, rgba(255, 255, 255, 0.055), transparent 34%),
+    #030303;
+  background-size: 48px 48px, 48px 48px, auto, auto;
+  scroll-margin-top: 1px;
+}
+
+.signal-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  padding: 11px 0;
+  color: #adaea8;
+  font-size: clamp(0.52rem, 0.8vw, 0.66rem);
+  letter-spacing: 0.12em;
+}
+
+.signal-status {
+  color: #e8e8e2;
+}
+
+.signal-panel {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.55fr) minmax(320px, 1fr);
+  align-items: center;
+  gap: clamp(30px, 6vw, 88px);
+  padding: clamp(34px, 6vh, 70px) 0;
+}
+
+.signal-copy {
+  position: relative;
+  padding: 24px 0 24px 22px;
+  border-left: 1px solid rgba(232, 232, 226, 0.45);
+}
+
+.signal-copy::before,
+.signal-copy::after {
+  position: absolute;
+  left: -4px;
+  width: 7px;
+  height: 7px;
+  border-left: 1px solid var(--ink);
+  content: "";
+}
+
+.signal-copy::before {
+  top: 0;
+  border-top: 1px solid var(--ink);
+}
+
+.signal-copy::after {
+  bottom: 0;
+  border-bottom: 1px solid var(--ink);
+}
+
+.signal-kicker {
+  color: #777873;
+  font-size: 0.56rem;
+  letter-spacing: 0.17em;
+}
+
+.signal-copy h2 {
+  margin: 12px 0 14px;
+  font-size: clamp(1.25rem, 3vw, 2.4rem);
+  font-weight: 520;
+  letter-spacing: 0.12em;
+}
+
+.signal-copy p {
+  max-width: 34ch;
+  margin: 0;
+  color: #969790;
+  font-size: clamp(0.68rem, 1vw, 0.82rem);
+  line-height: 1.65;
+  letter-spacing: 0.04em;
+}
+
+.spotify-player {
+  display: block;
+  width: 100%;
+  max-width: 760px;
+  height: 352px;
+  justify-self: end;
+  border: 0;
+  border-radius: 12px;
+  background: #111;
+}
+
 @keyframes code-in { to { opacity: 1; } }
 @keyframes terminal-on { from { opacity: 0; } 50% { opacity: 0.35; } to { opacity: 1; } }
 @keyframes blink { 0%, 46% { opacity: 1; } 47%, 100% { opacity: 0.15; } }
@@ -385,6 +490,28 @@ button {
 
   .terminal-footer {
     font-size: 0.48rem;
+  }
+
+  .signal-archive {
+    min-height: auto;
+    padding-top: 46px;
+    padding-bottom: 54px;
+  }
+
+  .signal-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .signal-panel {
+    grid-template-columns: 1fr;
+    gap: 28px;
+    padding-bottom: 0;
+  }
+
+  .spotify-player {
+    justify-self: stretch;
   }
 }
 

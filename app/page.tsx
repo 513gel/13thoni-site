@@ -13,7 +13,7 @@ const bootLines = [
 
 const nodes = [
   { id: "01", label: "MOTTLE", className: "node--archive", href: "/MOTTLE/" },
-  { id: "02", label: "SIGNALS", className: "node--signals", href: null },
+  { id: "02", label: "SIGNALS", className: "node--signals", href: "#playlist" },
   { id: "03", label: "ENTITY", className: "node--entity", href: null },
   { id: "04", label: "COMMS", className: "node--comms", href: null },
 ];
@@ -131,6 +131,34 @@ export default function Home() {
           <span>STATUS: {status}</span>
           <span className="footer-mark">十三鬼</span>
         </footer>
+      </section>
+
+      <section className="signal-archive" id="playlist" aria-labelledby="playlist-title">
+        <header className="signal-header">
+          <span>AUDIO CHANNEL // SPOTIFY</span>
+          <span className="signal-status">SIGNAL 02 // LIVE</span>
+        </header>
+
+        <div className="signal-panel">
+          <div className="signal-copy">
+            <span className="signal-kicker">CURATED TRANSMISSION</span>
+            <h2 id="playlist-title">13TH ONI PLAYLIST</h2>
+            <p>Selected frequencies from the external archive.</p>
+          </div>
+
+          <iframe
+            data-testid="embed-iframe"
+            className="spotify-player"
+            src="https://open.spotify.com/embed/playlist/4HSwiGun7jGSpFbPBj7J8a?utm_source=generator&theme=0&si=2da6b42ffd8843b5"
+            width="100%"
+            height="352"
+            frameBorder="0"
+            allowFullScreen
+            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+            loading="lazy"
+            title="13th Oni Spotify playlist"
+          />
+        </div>
       </section>
     </main>
   );
