@@ -191,6 +191,7 @@ export default function Home() {
           <a href="/MOTTLE/">◌ MOTTLE</a>
           <a href="/PIXEL-FORGE/">▦ PIXEL FORGE</a>
           <a href="/GLYPHSHIFT/">▧ GLYPHSHIFT</a>
+          <a href="/r/5c881e9e710d4aa0b92d">▣ REVIEW DROP // LOCKED</a>
         </nav>
       )}
 

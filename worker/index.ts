@@ -4,6 +4,8 @@ import handler from "vinext/server/app-router-entry";
 
 interface Env {
   ASSETS: Fetcher;
+  REVIEW_PIN?: string;
+  REVIEW_ACCESS_TOKEN?: string;
   DB: D1Database;
   IMAGES: {
     input(stream: ReadableStream): {
@@ -12,6 +14,22 @@ interface Env {
       };
     };
   };
+}
+
+const REVIEW_MEDIA_PREFIX = "/review-drop/media/";
+const REVIEW_MANIFEST_PATH = "/review-drop/manifest.json";
+
+function hasReviewAccess(request: Request, env: Env): boolean {
+  const token = env.REVIEW_ACCESS_TOKEN;
+  if (!token) return false;
+  return request.headers.get("cookie")?.split(";").some((part) => part.trim() === `oni_review_access=${token}`) ?? false;
+}
+
+function privateAsset(response: Response): Response {
+  const headers = new Headers(response.headers);
+  headers.set("Cache-Control", "private, no-store");
+  headers.set("Vary", "Cookie");
+  return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
 interface ExecutionContext {
@@ -32,6 +50,20 @@ const worker = {
     if (url.hostname === "www.13thoni.com") {
       url.hostname = "13thoni.com";
       return Response.redirect(url.toString(), 301);
+    }
+
+    if (url.pathname === "/api/review-unlock") {
+      if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: { Allow: "POST" } });
+      if (!env.REVIEW_PIN || !env.REVIEW_ACCESS_TOKEN) return new Response("Review access is not configured", { status: 503 });
+      let pin = "";
+      try { pin = String((await request.json() as { pin?: unknown }).pin ?? ""); } catch { return new Response("Invalid request", { status: 400 }); }
+      if (pin !== env.REVIEW_PIN) return new Response("Incorrect PIN", { status: 401, headers: { "Cache-Control": "no-store" } });
+      return new Response(null, { status: 204, headers: { "Set-Cookie": `oni_review_access=${env.REVIEW_ACCESS_TOKEN}; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Lax`, "Cache-Control": "no-store" } });
+    }
+
+    if (url.pathname === REVIEW_MANIFEST_PATH || url.pathname.startsWith(REVIEW_MEDIA_PREFIX)) {
+      if (!hasReviewAccess(request, env)) return new Response("Review access required", { status: 401, headers: { "Cache-Control": "no-store" } });
+      return privateAsset(await env.ASSETS.fetch(request));
     }
 
     if (url.pathname === "/MOTTLE") {

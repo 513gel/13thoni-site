@@ -2,14 +2,16 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-async function request(pathname) {
+async function request(pathname, init = {}) {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${Math.random()}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request(`http://localhost${pathname}`, { headers: { accept: "text/html" } }),
+    new Request(`http://localhost${pathname}`, { headers: { accept: "text/html", ...(init.headers ?? {}) }, ...init }),
     {
+      REVIEW_PIN: "3991",
+      REVIEW_ACCESS_TOKEN: "test-review-access-token",
       ASSETS: {
         fetch: async (assetRequest) => {
           const path = new URL(assetRequest.url).pathname.replace(/^\//, "");
@@ -38,6 +40,15 @@ test("renders the 13th Oni personal terminal with its local applications", async
   assert.doesNotMatch(html, /open\.spotify\.com/i);
 });
 
+test("adds the locked review drop to each 13OS Start menu without adding it to the launcher", async () => {
+  const [home, taskbar] = await Promise.all([
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../public/13os-taskbar.js", import.meta.url), "utf8"),
+  ]);
+  assert.match(home, /REVIEW DROP \/\/ LOCKED/);
+  assert.match(taskbar, /REVIEW DROP \/\/ LOCKED/);
+});
+
 test("serves the private review drop only at its direct unlisted route", async () => {
   const response = await request("/r/5c881e9e710d4aa0b92d");
   assert.equal(response.status, 200);
@@ -45,6 +56,23 @@ test("serves the private review drop only at its direct unlisted route", async (
   assert.match(html, /REVIEW DROP/i);
   assert.match(html, /noindex, nofollow/i);
   assert.doesNotMatch(html, /MOTTLE|PIXEL FORGE|GLYPHSHIFT/i);
+});
+
+test("requires the review PIN before serving the manifest or review media", async () => {
+  const blocked = await request("/review-drop/manifest.json");
+  assert.equal(blocked.status, 401);
+
+  const rejected = await request("/api/review-unlock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin: "0000" }) });
+  assert.equal(rejected.status, 401);
+
+  const unlocked = await request("/api/review-unlock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin: "3991" }) });
+  assert.equal(unlocked.status, 204);
+  const cookie = unlocked.headers.get("set-cookie");
+  assert.match(cookie ?? "", /HttpOnly; Secure; SameSite=Lax/i);
+
+  const manifest = await request("/review-drop/manifest.json", { headers: { cookie: "oni_review_access=test-review-access-token" } });
+  assert.equal(manifest.status, 200);
+  assert.equal(manifest.headers.get("cache-control"), "private, no-store");
 });
 
 test("serves the bundled Mottle application at /MOTTLE/", async () => {
