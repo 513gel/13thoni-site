@@ -13,7 +13,7 @@ const bootLines = [
 
 const nodes = [
   { id: "01", label: "MOTTLE", className: "node--archive", href: "/MOTTLE/" },
-  { id: "02", label: "SIGNALS", className: "node--signals", href: null },
+  { id: "02", label: "GLYPHSHIFT", className: "node--signals", href: "/GLYPHSHIFT/" },
   { id: "03", label: "ENTITY", className: "node--entity", href: null },
   { id: "04", label: "COMMS", className: "node--comms", href: null },
 ];
