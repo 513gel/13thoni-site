@@ -65,6 +65,9 @@ test("serves Pixel Forge as a local 13OS application", async () => {
   assert.match(html, /CANVAS PROTOCOL/i);
   assert.match(html, /id="canvasSize"/i);
   assert.match(html, /function setCanvasSize/i);
+  assert.match(html, /class="workspace"/i);
+  assert.match(html, /class="inspector"/i);
+  assert.match(html, /CONTROL SURFACE/i);
   assert.match(html, /13os-taskbar\.js/i);
 });
 

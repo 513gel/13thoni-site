@@ -30,97 +30,98 @@ h2{display:flex;justify-content:space-between;gap:8px;font-size:10px;letter-spac
 #anim{width:112px;height:112px;border:1px solid var(--line2);image-rendering:pixelated;background:#25292d}
 kbd{font-family:inherit;background:#090909;border:1px solid var(--line);border-radius:0;padding:1px 3px;font-size:8px}.hidden{display:none}
 @media(max-width:1180px){body{overflow:auto}main{height:auto;min-height:calc(100vh - 84px);grid-template-columns:1fr}.center{min-height:650px}}@media(max-width:680px){header{padding:0 10px}.brand{font-size:12px}.brand small,header>.muted{display:none}main{padding:7px;gap:7px}.col{gap:7px}.panel{max-height:none}.center{min-height:480px}#editor{max-width:calc(100vw - 34px);max-height:calc(100vh - 180px)}}
+/* ---------- 13OS workspace rebuild ---------- */
+html,body{background:#050505}
+body{overflow:hidden;font-size:12px}
+header{height:42px;padding:0 16px;background:#090909;border-bottom:1px solid #292929}
+.brand{display:flex;align-items:center;gap:4px;font-size:16px;letter-spacing:.08em}.brand small{margin-left:5px}
+main{height:calc(100vh - 84px);display:grid;grid-template-columns:minmax(0,1fr) 350px;gap:0;padding:0;background:#050505}
+.workspace{min-width:0;min-height:0;display:grid;grid-template-rows:42px minmax(0,1fr) auto;background:#070707}
+.workspace-toolbar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:0 14px;border-bottom:1px solid var(--line);background:#090909}
+.toolbar-actions{display:flex;gap:5px}.workspace-toolbar button{padding:5px 8px;font-size:9px}
+.stage-shell{min-height:0;padding:16px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#151515 0,#090909 42%,#050505 100%)}
+.editor-stage{width:100%;height:100%;min-height:420px;display:grid;grid-template-rows:30px minmax(0,1fr) 30px;overflow:hidden;border:1px solid var(--line2);background:#000}
+.stage-head,.stage-readout{display:flex;align-items:center;justify-content:space-between;padding:0 10px;background:#090909;color:var(--mut);font-size:9px;letter-spacing:.1em}
+.stage-head{border-bottom:1px solid var(--line)}.stage-readout{border-top:1px solid var(--line)}.stage-head b{color:var(--txt);font-weight:700}
+.stage{min-height:0;background:linear-gradient(var(--line) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/24px 24px,#050505}
+#editor{max-width:min(100%,calc(100vh - 230px));max-height:calc(100vh - 230px);border-color:#6b6b6b}
+.work-deck{display:grid;grid-template-columns:minmax(300px,.9fr) minmax(360px,1.1fr);border-top:1px solid var(--line);background:#090909}
+.work-deck .panel{margin:0;border:0;border-right:1px solid var(--line);box-shadow:none;padding:11px;max-height:205px;overflow:auto}.work-deck .panel:last-child{border-right:0}
+.inspector{min-width:0;overflow-y:auto;border-left:1px solid var(--line);background:#090909;padding:10px}
+.inspector-title{position:sticky;top:-10px;z-index:3;display:flex;justify-content:space-between;align-items:center;min-height:32px;margin:-10px -10px 10px;padding:0 10px;border-bottom:1px solid var(--line);background:#090909;color:var(--mut);font-size:9px;letter-spacing:.15em}.inspector-title b{color:var(--txt);font-size:10px}
+.inspector .panel{margin-bottom:10px;padding:11px;overflow:visible;box-shadow:inset 3px 0 0 var(--red)}
+.panel h2{margin-bottom:10px}.panel h2 span{font-size:8px}
+.field{grid-template-columns:minmax(0,1fr) 112px}.field label{font-size:9px}
+.tools{grid-template-columns:repeat(5,1fr)}.tools button{min-height:34px;padding:5px 3px;font-size:8px}.tools kbd{display:block;width:max-content;margin:3px auto 0}
+.selection-grid{margin-top:9px}.switches{display:flex;gap:16px;align-items:center;margin-top:9px}.switches label{margin:0}
+.import-preview{display:grid;grid-template-columns:88px 1fr;gap:10px;align-items:start}.import-preview #source{width:88px;height:88px}.import-controls{min-width:0}.import-controls .field{margin:0 0 6px}.import-controls .field label{font-size:8px}
+.import-tuning{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;margin-top:8px}.import-tuning .field{grid-template-columns:1fr;margin:5px 0}.import-tuning .field label{margin-bottom:3px}
+.colors{grid-template-columns:76px 1fr}.palette{grid-template-columns:repeat(8,1fr)}.frames{padding-bottom:5px}.frame{min-width:56px}.frame canvas{width:46px;height:46px}
+.animation-grid{display:grid;grid-template-columns:112px minmax(0,1fr);gap:9px}.animation-grid .field{margin:6px 0}.output-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.workspace .help{margin:7px 0 0}.inspector .help{margin:8px 0 0}
+@media(max-width:1050px){body{overflow:auto}main{height:auto;min-height:calc(100vh - 84px);grid-template-columns:1fr}.inspector{border-left:0;border-top:1px solid var(--line);max-height:none}.workspace{min-height:760px}.work-deck{grid-template-columns:1fr 1fr}.inspector-title{position:relative;top:auto}}@media(max-width:680px){header{padding:0 10px}.brand{font-size:13px}header>.muted,.brand small{display:none}main{min-height:0}.workspace{min-height:640px}.workspace-toolbar{padding:0 8px}.stage-shell{padding:8px}.editor-stage{min-height:360px}#editor{max-width:calc(100vw - 36px);max-height:calc(100vh - 260px)}.work-deck{grid-template-columns:1fr}.work-deck .panel{border-right:0;border-bottom:1px solid var(--line);max-height:none}.tools{grid-template-columns:repeat(3,1fr)}.import-preview{grid-template-columns:72px 1fr}.import-preview #source{width:72px;height:72px}.import-tuning{grid-template-columns:1fr}.inspector{padding:8px}.animation-grid{grid-template-columns:88px 1fr}#anim{width:88px;height:88px}}
 </style>
 </head>
 <body>
 <header><div class="brand">13OS // PIXEL <b>FORGE</b><small>SPRITE / MOTION</small></div><div id="canvasStatus" class="muted">CANVAS 32 × 32 // LOCAL-FIRST</div></header>
 <main>
-<section class="col">
-  <div class="panel">
-    <h2>Canvas Protocol <span>Nearest resample</span></h2>
-    <div class="field"><label>Pixel edge</label><select id="canvasSize"><option value="16">16 × 16</option><option value="24">24 × 24</option><option value="32" selected>32 × 32</option><option value="48">48 × 48</option><option value="64">64 × 64</option><option value="96">96 × 96</option><option value="128">128 × 128</option></select></div>
-    <p class="help">Changing size scales every existing frame with hard nearest-neighbor pixels. No blur, no bullshit.</p>
-  </div>
-  <div class="panel">
-    <h2>Import / Convert <span>Local file only</span></h2>
-    <input id="file" class="full" type="file" accept="image/*">
-    <canvas id="source" width="256" height="256"></canvas>
-    <div class="field"><label>Fit</label><select id="fit"><option value="contain">Contain</option><option value="cover">Crop to fill</option><option value="stretch">Stretch</option></select></div>
-    <div class="field"><label>Sampling</label><select id="sample"><option value="smooth">Smooth</option><option value="nearest">Nearest</option></select></div>
-    <div class="field"><label>Color limit</label><select id="limit"><option value="0">Full color</option><option>32</option><option>16</option><option>8</option><option>4</option></select></div>
-    <div class="field"><label>Brightness</label><input id="bright" type="range" min="-100" max="100" value="0"></div>
-    <div class="field"><label>Contrast</label><input id="contrast" type="range" min="-100" max="100" value="0"></div>
-    <div class="field"><label>Saturation</label><input id="sat" type="range" min="-100" max="100" value="0"></div>
-    <div class="field"><label>Alpha cutoff</label><input id="cut" type="range" min="0" max="255" value="20"></div>
-    <div class="grid2"><button id="replace" class="primary">Replace frame</button><button id="addImage">Add as frame</button></div>
-    <p class="help">Imports resolve to the active canvas size. Transparent pixels remain transparent.</p>
-  </div>
-  <div class="panel">
-    <h2>Tool Matrix <span>Direct pixels</span></h2>
-    <div class="tools">
-      <button class="on" data-tool="pencil">Pencil <kbd>P</kbd></button>
-      <button data-tool="eraser">Eraser <kbd>E</kbd></button>
-      <button data-tool="pick">Pick <kbd>I</kbd></button>
-      <button data-tool="fill">Fill <kbd>F</kbd></button>
-      <button data-tool="select">Select <kbd>S</kbd></button>
+  <section class="workspace">
+    <div class="workspace-toolbar">
+      <div class="toolbar-actions"><button id="undo">← Undo <kbd>Ctrl Z</kbd></button><button id="redo">Redo → <kbd>Ctrl Y</kbd></button></div>
+      <div id="xy" class="muted">x: -- · y: --</div>
     </div>
-    <div class="field"><label>Square brush</label><select id="brush"><option value="1">1×1</option><option value="2">2×2</option><option value="3">3×3</option><option value="4">4×4</option></select></div>
-    <label class="help"><input id="grid" type="checkbox" checked> Show grid</label><br>
-    <label class="help"><input id="onion" type="checkbox"> Previous-frame onion skin</label>
-    <h3>Selection</h3>
-    <div class="grid3">
-      <button id="copy">Copy</button><button id="paste">Paste</button><button id="clear">Clear</button>
-      <button id="deselect">Deselect</button><button id="flipH">Flip H</button><button id="flipV">Flip V</button>
+    <div class="stage-shell">
+      <section class="editor-stage">
+        <div class="stage-head"><span>PIXEL FIELD // <b>DIRECT EDIT</b></span><span id="canvasReadout">32 × 32 RGBA</span></div>
+        <div class="stage"><canvas id="editor" width="576" height="576"></canvas></div>
+        <div class="stage-readout"><span id="frameText">Frame 1 / 1</span><span>LOCAL BUFFER // READY</span></div>
+      </section>
     </div>
-    <p class="help">Arrow keys move selected pixels. Delete clears them. Copy and paste use an internal pixel clipboard.</p>
-  </div>
-</section>
-
-<section class="center">
-  <div class="bar top"><div class="row"><button id="undo">Undo <kbd>Ctrl Z</kbd></button><button id="redo">Redo <kbd>Ctrl Y</kbd></button></div><div id="xy" class="muted">x: -- · y: --</div></div>
-  <div class="stage"><canvas id="editor" width="576" height="576"></canvas></div>
-  <div class="bar bottom"><div id="frameText" class="muted">Frame 1 / 1</div><div id="canvasReadout" class="muted">32 × 32 RGBA</div></div>
-</section>
-
-<section class="col">
-  <div class="panel">
-    <h2>Color Signal <span>RGBA</span></h2>
-    <div class="colors">
-      <div id="current" class="colorBox"></div>
-      <div>
-        <input id="color" type="color" value="#df5947" class="full">
-        <input id="hex" value="#df5947" maxlength="7" class="full" style="margin-top:6px">
-      </div>
+    <div class="work-deck">
+      <section class="panel">
+        <h2>Tool Matrix <span>Direct pixels</span></h2>
+        <div class="tools">
+          <button class="on" data-tool="pencil">Pencil <kbd>P</kbd></button><button data-tool="eraser">Eraser <kbd>E</kbd></button><button data-tool="pick">Pick <kbd>I</kbd></button><button data-tool="fill">Fill <kbd>F</kbd></button><button data-tool="select">Select <kbd>S</kbd></button>
+        </div>
+        <div class="field"><label>Square brush</label><select id="brush"><option value="1">1×1</option><option value="2">2×2</option><option value="3">3×3</option><option value="4">4×4</option></select></div>
+        <div class="switches"><label class="help"><input id="grid" type="checkbox" checked> Show grid</label><label class="help"><input id="onion" type="checkbox"> Onion skin</label></div>
+        <div class="grid3 selection-grid"><button id="copy">Copy</button><button id="paste">Paste</button><button id="clear">Clear</button><button id="deselect">Deselect</button><button id="flipH">Flip H</button><button id="flipV">Flip V</button></div>
+      </section>
+      <section class="panel">
+        <h2>Frame Stack <span>Animation</span></h2>
+        <div class="animation-grid"><canvas id="anim" width="112" height="112"></canvas><div><div class="grid2"><button id="play">Play</button><button id="stop">Stop</button></div><div class="field"><label>FPS</label><input id="fps" type="number" min="1" max="30" value="8"></div></div></div>
+        <div id="frames" class="frames"></div>
+        <div class="grid3"><button id="newFrame">New</button><button id="duplicate">Duplicate</button><button id="deleteFrame">Delete</button></div>
+      </section>
     </div>
-    <div class="field"><label>Opacity</label><input id="alpha" type="range" min="0" max="255" value="255"></div>
-    <button id="addColor" class="full">Add current color to palette</button>
-    <h3>Palette</h3><div id="palette" class="palette"></div>
-    <p class="help">The color picker uses the full 24-bit RGB range plus alpha, rather than a restricted built-in palette.</p>
-  </div>
+  </section>
 
-  <div class="panel">
-    <h2>Frame Stack <span>Animation</span></h2>
-    <div class="row"><canvas id="anim" width="112" height="112"></canvas><div style="flex:1">
-      <div class="grid2"><button id="play">Play</button><button id="stop">Stop</button></div>
-      <div class="field"><label>FPS</label><input id="fps" type="number" min="1" max="30" value="8"></div>
-    </div></div>
-    <div id="frames" class="frames"></div>
-    <div class="grid3"><button id="newFrame">New</button><button id="duplicate">Duplicate</button><button id="deleteFrame">Delete</button></div>
-  </div>
-
-  <div class="panel">
-    <h2>Output Relay <span>PNG / JSON</span></h2>
-    <div class="field"><label>Sheet columns</label><input id="cols" type="number" min="1" max="64" value="8"></div>
-    <div class="field"><label>Frame spacing</label><input id="padding" type="number" min="0" max="16" value="0"></div>
-    <div class="grid2">
-      <button id="exportFrame">Frame PNG</button><button id="exportSheet">Sheet PNG</button>
-      <button id="exportJSON">Sheet JSON</button><button id="save">Save project</button>
-    </div>
-    <input id="loadFile" class="hidden" type="file" accept=".json,application/json">
-    <button id="load" class="full" style="margin-top:6px">Load project</button>
-    <p class="help">Every frame exports at the active canvas size. Sprite sheets remain transparent PNG files.</p>
-  </div>
-</section>
+  <aside class="inspector">
+    <div class="inspector-title"><b>CONTROL SURFACE</b><span>LOCAL-FIRST</span></div>
+    <section class="panel">
+      <h2>Canvas Protocol <span>Nearest resample</span></h2>
+      <div class="field"><label>Pixel edge</label><select id="canvasSize"><option value="16">16 × 16</option><option value="24">24 × 24</option><option value="32" selected>32 × 32</option><option value="48">48 × 48</option><option value="64">64 × 64</option><option value="96">96 × 96</option><option value="128">128 × 128</option></select></div>
+      <p class="help">Resize every frame with hard nearest-neighbor pixels.</p>
+    </section>
+    <section class="panel">
+      <h2>Import / Convert <span>Local file only</span></h2>
+      <input id="file" class="full" type="file" accept="image/*">
+      <div class="import-preview"><canvas id="source" width="256" height="256"></canvas><div class="import-controls"><div class="field"><label>Fit</label><select id="fit"><option value="contain">Contain</option><option value="cover">Crop to fill</option><option value="stretch">Stretch</option></select></div><div class="field"><label>Sampling</label><select id="sample"><option value="smooth">Smooth</option><option value="nearest">Nearest</option></select></div><div class="field"><label>Color limit</label><select id="limit"><option value="0">Full color</option><option>32</option><option>16</option><option>8</option><option>4</option></select></div></div></div>
+      <div class="import-tuning"><div class="field"><label>Brightness</label><input id="bright" type="range" min="-100" max="100" value="0"></div><div class="field"><label>Contrast</label><input id="contrast" type="range" min="-100" max="100" value="0"></div><div class="field"><label>Saturation</label><input id="sat" type="range" min="-100" max="100" value="0"></div><div class="field"><label>Alpha cutoff</label><input id="cut" type="range" min="0" max="255" value="20"></div></div>
+      <div class="grid2"><button id="replace" class="primary">Replace frame</button><button id="addImage">Add as frame</button></div>
+    </section>
+    <section class="panel">
+      <h2>Color Signal <span>RGBA</span></h2>
+      <div class="colors"><div id="current" class="colorBox"></div><div><input id="color" type="color" value="#df5947" class="full"><input id="hex" value="#df5947" maxlength="7" class="full" style="margin-top:6px"></div></div>
+      <div class="field"><label>Opacity</label><input id="alpha" type="range" min="0" max="255" value="255"></div><button id="addColor" class="full">Add color</button><h3>Palette</h3><div id="palette" class="palette"></div>
+    </section>
+    <section class="panel">
+      <h2>Output Relay <span>PNG / JSON</span></h2>
+      <div class="field"><label>Sheet columns</label><input id="cols" type="number" min="1" max="64" value="8"></div><div class="field"><label>Frame spacing</label><input id="padding" type="number" min="0" max="16" value="0"></div>
+      <div class="output-grid"><button id="exportFrame">Frame PNG</button><button id="exportSheet">Sheet PNG</button><button id="exportJSON">Sheet JSON</button><button id="save">Save project</button></div>
+      <input id="loadFile" class="hidden" type="file" accept=".json,application/json"><button id="load" class="full">Load project</button>
+    </section>
+  </aside>
 </main>
 <div id="os-taskbar"></div>
 
