@@ -136,7 +136,7 @@ export default function Home() {
                 <span className="app-icon">M</span><span><b>MOTTLE</b><small>Image degradation &amp; mutation engine</small></span><em>OPEN ↗</em>
               </a>
               <a className="app-tile" href="/PIXEL-FORGE/">
-                <span className="app-icon">P</span><span><b>PIXEL FORGE 32</b><small>32×32 sprite &amp; animation workstation</small></span><em>OPEN ↗</em>
+                <span className="app-icon">P</span><span><b>PIXEL FORGE</b><small>Variable-size sprite &amp; animation workstation</small></span><em>OPEN ↗</em>
               </a>
               <a className="app-tile" href="/GLYPHSHIFT/">
                 <span className="app-icon">G</span><span><b>GLYPHSHIFT</b><small>Text, signal, and waveform mutation suite</small></span><em>OPEN ↗</em>
@@ -188,12 +188,10 @@ export default function Home() {
         </div>
       </section>
 
-      {playerOpen && (
-        <section className="media-dock" aria-label="Rude Boi Hours media dock">
+      <section className={"media-dock " + (playerOpen ? "is-open" : "")} aria-label="Rude Boi Hours media dock" aria-hidden={!playerOpen}>
           <header><span>RUDE BOI HOURS // SPOTIFY UPLINK</span><button type="button" onClick={togglePlayer}>MINIMIZE ×</button></header>
-          <iframe data-testid="embed-iframe" className="spotify-player" src="https://open.spotify.com/embed/playlist/4HSwiGun7jGSpFbPBj7J8a?utm_source=generator&theme=0&si=2da6b42ffd8843b5" width="100%" height="152" frameBorder="0" allowFullScreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="Rude Boi Hours Spotify playlist" />
-        </section>
-      )}
+          <iframe data-testid="embed-iframe" tabIndex={playerOpen ? 0 : -1} className="spotify-player" src="https://open.spotify.com/embed/playlist/4HSwiGun7jGSpFbPBj7J8a?utm_source=generator&theme=0&si=2da6b42ffd8843b5" width="100%" height="152" frameBorder="0" allowFullScreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="Rude Boi Hours Spotify playlist" />
+      </section>
 
       {menuOpen && (
         <nav className="start-menu" aria-label="Start menu">
@@ -202,7 +200,7 @@ export default function Home() {
           <button type="button" onClick={() => jump("archive", "RENDER VAULT // OPEN")}>▣ RENDER VAULT</button>
           <button type="button" onClick={() => jump("wallpapers", "WALLPAPER INDEX // OPEN")}>▤ WALLPAPERS</button>
           <a href="/MOTTLE/">◌ MOTTLE</a>
-          <a href="/PIXEL-FORGE/">▦ PIXEL FORGE 32</a>
+          <a href="/PIXEL-FORGE/">▦ PIXEL FORGE</a>
           <a href="/GLYPHSHIFT/">▧ GLYPHSHIFT</a>
           <button type="button" onClick={togglePlayer}>♫ RUDE BOI HOURS</button>
         </nav>

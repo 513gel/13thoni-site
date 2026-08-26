@@ -3,42 +3,46 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Pixel Forge 32</title>
+<title>PIXEL FORGE — 13OS SPRITE TOOL</title>
+<link rel="stylesheet" href="/13os-taskbar.css">
 <style>
- :root{--bg:#050506;--p:#101112;--p2:#161718;--line:rgba(236,236,230,.22);--txt:#ecece6;--mut:#90918b;--red:#e32232}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font-family:"Courier New",monospace;height:100%}
-body{overflow:hidden}button,input,select{font:inherit}button{background:#161718;color:var(--txt);border:1px solid var(--line);border-radius:0;padding:7px 9px;cursor:pointer}button:hover{background:#e9e9e3;color:#050505}button.on{background:var(--red);border-color:var(--red)}
-input,select{background:#090a0a;color:var(--txt);border:1px solid var(--line);border-radius:0;padding:6px}input[type=range]{padding:0;width:100%}
-header{height:48px;background:#090a0a;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px}
-.brand{font-weight:800;letter-spacing:.12em}.brand b{color:var(--red)}.muted,.help{color:var(--mut);font-size:12px}.help{line-height:1.4}
-main{height:calc(100% - 90px);display:grid;grid-template-columns:290px minmax(580px,1fr) 330px;gap:8px;padding:8px}
-.col{display:flex;flex-direction:column;gap:8px;min-height:0}.panel{background:var(--p);border:1px solid var(--line);border-radius:0;padding:10px;overflow:auto}
-h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 9px;color:#cbd0d5}h3{font-size:12px;color:var(--mut);margin:12px 0 6px}
+ :root{--bg:#050505;--p:#0c0c0c;--p2:#111;--line:#292929;--line2:#3a3a3a;--txt:#f5f5f5;--mut:#9c9c9c;--red:#e60012}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font-family:"SF Mono","Cascadia Code","JetBrains Mono",Consolas,"Courier New",monospace;height:100%}
+body{overflow:hidden}button,input,select{font:inherit}button{background:transparent;color:var(--txt);border:1px solid var(--line2);border-radius:0;padding:8px 9px;font-size:10px;letter-spacing:.07em;text-transform:uppercase;cursor:pointer}button:hover{border-color:var(--txt);background:#1a1a1a}button.on{background:var(--txt);border-color:var(--txt);color:var(--bg);font-weight:800}button.primary{background:var(--red);border-color:var(--red);color:#fff;font-weight:800}
+input,select{background:#090909;color:var(--txt);border:1px solid var(--line2);border-radius:0;padding:7px 8px;font-size:11px}input[type=range]{padding:0;width:100%;accent-color:var(--red)}
+header{height:42px;background:#090909;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 16px}
+.brand{font-size:15px;font-weight:900;letter-spacing:.1em}.brand b{color:var(--red)}.brand small{margin-left:7px;color:var(--mut);font-size:9px;font-weight:400}.muted,.help{color:var(--mut);font-size:10px}.help{line-height:1.5}
+main{height:calc(100% - 84px);display:grid;grid-template-columns:270px minmax(520px,1fr) 310px;gap:10px;padding:10px}
+.col{display:flex;flex-direction:column;gap:10px;min-height:0}.panel{background:var(--p);border:1px solid var(--line2);border-radius:0;padding:11px;overflow:auto;box-shadow:inset 3px 0 0 var(--red)}
+h2{display:flex;justify-content:space-between;gap:8px;font-size:10px;letter-spacing:.15em;text-transform:uppercase;margin:0 0 10px;color:var(--txt)}h2 span{color:var(--mut);font-size:8px;font-weight:400}h3{font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--mut);margin:14px 0 7px}
 .row{display:flex;align-items:center;gap:6px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
-.field{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;margin:7px 0}.field label{font-size:12px;color:var(--mut)}
-.full{width:100%}.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.tools button{font-size:12px;min-height:38px}
-.center{background:var(--p);border:1px solid var(--line);border-radius:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
-.bar{height:42px;padding:7px 10px;background:#090a0a;display:flex;align-items:center;justify-content:space-between}.bar.top{border-bottom:1px solid var(--line)}.bar.bottom{border-top:1px solid var(--line)}
-.stage{flex:1;min-height:0;display:grid;place-items:center;overflow:auto;background:#0b0c0c}
-#editor{width:576px;height:576px;border:1px solid #606972;box-shadow:0 12px 40px #0008;image-rendering:pixelated;touch-action:none;cursor:crosshair}
-#source{width:100%;aspect-ratio:1;background:#fff;border:1px solid var(--line);image-rendering:pixelated}
-.colors{display:grid;grid-template-columns:90px 1fr;gap:8px}.colorBox{height:58px;border:1px solid var(--line);border-radius:5px}
-.palette{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}.sw{aspect-ratio:1;border:1px solid #ffffff2c;border-radius:3px;cursor:pointer}
-.frames{display:flex;gap:7px;overflow-x:auto;padding:4px 1px 8px}.frame{min-width:58px;background:#111;border:1px solid var(--line);border-radius:5px;padding:4px;cursor:pointer}.frame.active{outline:2px solid var(--red)}
-.frame canvas{width:48px;height:48px;display:block;image-rendering:pixelated;background:#ddd}.num{text-align:center;font-size:10px;color:var(--mut);margin-top:2px}
-#anim{width:112px;height:112px;border:1px solid var(--line);image-rendering:pixelated;background:#25292d}
-kbd{font-family:Consolas,monospace;background:#0d0f10;border:1px solid var(--line);border-radius:3px;padding:1px 3px;font-size:10px}
-.hidden{display:none}
-footer{height:42px;border-top:1px solid var(--line);background:#090a0a;display:flex;align-items:center;gap:0;font-size:10px;letter-spacing:.1em;position:relative;z-index:4}footer a,footer span{height:100%;display:flex;align-items:center;padding:0 12px;border-right:1px solid #ffffff18;color:var(--txt);text-decoration:none}footer .home{background:var(--red);font-size:12px}footer .state{margin-left:auto;color:var(--mut)}footer a:hover{background:#e9e9e3;color:#050505}
-@media(max-width:1180px){body{overflow:auto}main{height:auto;grid-template-columns:1fr}.center{min-height:690px}footer{position:sticky;bottom:0}}
+.field{display:grid;grid-template-columns:1fr 92px;gap:8px;align-items:center;margin:8px 0}.field label{font-size:10px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}
+.full{width:100%}.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.tools button{font-size:9px;min-height:36px}
+.center{background:var(--p);border:1px solid var(--line2);border-radius:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.bar{min-height:38px;padding:6px 9px;background:#090909;display:flex;align-items:center;justify-content:space-between;gap:8px}.bar.top{border-bottom:1px solid var(--line)}.bar.bottom{border-top:1px solid var(--line)}
+.stage{flex:1;min-height:0;display:grid;place-items:center;overflow:auto;background:linear-gradient(var(--line) 1px,transparent 1px) 0 0/24px 24px,linear-gradient(90deg,var(--line) 1px,transparent 1px) 0 0/24px 24px,#050505}
+#editor{width:auto;height:auto;max-width:min(100%,calc(100vh - 150px));max-height:calc(100vh - 150px);border:1px solid #727272;box-shadow:0 14px 42px #000c;image-rendering:pixelated;touch-action:none;cursor:crosshair}
+#source{width:100%;aspect-ratio:1;background:#fff;border:1px solid var(--line2);image-rendering:pixelated}
+.colors{display:grid;grid-template-columns:76px 1fr;gap:8px}.colorBox{height:58px;border:1px solid var(--line2);border-radius:0}
+.palette{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}.sw{aspect-ratio:1;border:1px solid #ffffff2c;border-radius:0;cursor:pointer}.sw:hover{outline:1px solid var(--txt)}
+.frames{display:flex;gap:7px;overflow-x:auto;padding:4px 1px 8px}.frame{min-width:58px;background:#090909;border:1px solid var(--line2);border-radius:0;padding:4px;cursor:pointer}.frame.active{border-color:var(--txt);box-shadow:inset 0 -3px 0 var(--red)}
+.frame canvas{width:48px;height:48px;display:block;image-rendering:pixelated;background:#ddd}.num{text-align:center;font-size:9px;color:var(--mut);margin-top:3px}
+#anim{width:112px;height:112px;border:1px solid var(--line2);image-rendering:pixelated;background:#25292d}
+kbd{font-family:inherit;background:#090909;border:1px solid var(--line);border-radius:0;padding:1px 3px;font-size:8px}.hidden{display:none}
+@media(max-width:1180px){body{overflow:auto}main{height:auto;min-height:calc(100vh - 84px);grid-template-columns:1fr}.center{min-height:650px}}@media(max-width:680px){header{padding:0 10px}.brand{font-size:12px}.brand small,header>.muted{display:none}main{padding:7px;gap:7px}.col{gap:7px}.panel{max-height:none}.center{min-height:480px}#editor{max-width:calc(100vw - 34px);max-height:calc(100vh - 180px)}}
 </style>
 </head>
 <body>
-<header><div class="brand">13OS // PIXEL <b>FORGE</b> 32</div><div class="muted">LOCAL APP · TRUE 32×32 SPRITE WORKSTATION</div></header>
+<header><div class="brand">13OS // PIXEL <b>FORGE</b><small>SPRITE / MOTION</small></div><div id="canvasStatus" class="muted">CANVAS 32 × 32 // LOCAL-FIRST</div></header>
 <main>
 <section class="col">
   <div class="panel">
-    <h2>Import and Convert</h2>
+    <h2>Canvas Protocol <span>Nearest resample</span></h2>
+    <div class="field"><label>Pixel edge</label><select id="canvasSize"><option value="16">16 × 16</option><option value="24">24 × 24</option><option value="32" selected>32 × 32</option><option value="48">48 × 48</option><option value="64">64 × 64</option><option value="96">96 × 96</option><option value="128">128 × 128</option></select></div>
+    <p class="help">Changing size scales every existing frame with hard nearest-neighbor pixels. No blur, no bullshit.</p>
+  </div>
+  <div class="panel">
+    <h2>Import / Convert <span>Local file only</span></h2>
     <input id="file" class="full" type="file" accept="image/*">
     <canvas id="source" width="256" height="256"></canvas>
     <div class="field"><label>Fit</label><select id="fit"><option value="contain">Contain</option><option value="cover">Crop to fill</option><option value="stretch">Stretch</option></select></div>
@@ -48,11 +52,11 @@ footer{height:42px;border-top:1px solid var(--line);background:#090a0a;display:f
     <div class="field"><label>Contrast</label><input id="contrast" type="range" min="-100" max="100" value="0"></div>
     <div class="field"><label>Saturation</label><input id="sat" type="range" min="-100" max="100" value="0"></div>
     <div class="field"><label>Alpha cutoff</label><input id="cut" type="range" min="0" max="255" value="20"></div>
-    <div class="grid2"><button id="replace">Replace frame</button><button id="addImage">Add as frame</button></div>
-    <p class="help">Imports are converted to a real 32×32 RGBA image. Transparent pixels remain transparent.</p>
+    <div class="grid2"><button id="replace" class="primary">Replace frame</button><button id="addImage">Add as frame</button></div>
+    <p class="help">Imports resolve to the active canvas size. Transparent pixels remain transparent.</p>
   </div>
   <div class="panel">
-    <h2>Tools</h2>
+    <h2>Tool Matrix <span>Direct pixels</span></h2>
     <div class="tools">
       <button class="on" data-tool="pencil">Pencil <kbd>P</kbd></button>
       <button data-tool="eraser">Eraser <kbd>E</kbd></button>
@@ -75,12 +79,12 @@ footer{height:42px;border-top:1px solid var(--line);background:#090a0a;display:f
 <section class="center">
   <div class="bar top"><div class="row"><button id="undo">Undo <kbd>Ctrl Z</kbd></button><button id="redo">Redo <kbd>Ctrl Y</kbd></button></div><div id="xy" class="muted">x: -- · y: --</div></div>
   <div class="stage"><canvas id="editor" width="576" height="576"></canvas></div>
-  <div class="bar bottom"><div id="frameText" class="muted">Frame 1 / 1</div><div class="muted">32 × 32 RGBA</div></div>
+  <div class="bar bottom"><div id="frameText" class="muted">Frame 1 / 1</div><div id="canvasReadout" class="muted">32 × 32 RGBA</div></div>
 </section>
 
 <section class="col">
   <div class="panel">
-    <h2>Color</h2>
+    <h2>Color Signal <span>RGBA</span></h2>
     <div class="colors">
       <div id="current" class="colorBox"></div>
       <div>
@@ -95,7 +99,7 @@ footer{height:42px;border-top:1px solid var(--line);background:#090a0a;display:f
   </div>
 
   <div class="panel">
-    <h2>Frames</h2>
+    <h2>Frame Stack <span>Animation</span></h2>
     <div class="row"><canvas id="anim" width="112" height="112"></canvas><div style="flex:1">
       <div class="grid2"><button id="play">Play</button><button id="stop">Stop</button></div>
       <div class="field"><label>FPS</label><input id="fps" type="number" min="1" max="30" value="8"></div>
@@ -105,7 +109,7 @@ footer{height:42px;border-top:1px solid var(--line);background:#090a0a;display:f
   </div>
 
   <div class="panel">
-    <h2>Export</h2>
+    <h2>Output Relay <span>PNG / JSON</span></h2>
     <div class="field"><label>Sheet columns</label><input id="cols" type="number" min="1" max="64" value="8"></div>
     <div class="field"><label>Frame spacing</label><input id="padding" type="number" min="0" max="16" value="0"></div>
     <div class="grid2">
@@ -114,15 +118,15 @@ footer{height:42px;border-top:1px solid var(--line);background:#090a0a;display:f
     </div>
     <input id="loadFile" class="hidden" type="file" accept=".json,application/json">
     <button id="load" class="full" style="margin-top:6px">Load project</button>
-    <p class="help">Every frame is exported at exactly 32×32 pixels. Sprite sheets remain transparent PNG files.</p>
+    <p class="help">Every frame exports at the active canvas size. Sprite sheets remain transparent PNG files.</p>
   </div>
 </section>
 </main>
-<footer><a class="home" href="/">十三鬼</a><a href="/">HOME</a><a href="/MOTTLE/">MOTTLE</a><span>PIXEL FORGE 32</span><span class="state">LOCAL APP // 513GEL</span></footer>
+<div id="os-taskbar"></div>
 
 <script>
 (()=>{'use strict';
-const S=32,Z=18,$=id=>document.getElementById(id),ed=$('editor'),cx=ed.getContext('2d'),src=$('source'),sc=src.getContext('2d'),anim=$('anim'),ac=anim.getContext('2d');
+let S=32;const Z=18,$=id=>document.getElementById(id),ed=$('editor'),cx=ed.getContext('2d'),src=$('source'),sc=src.getContext('2d'),anim=$('anim'),ac=anim.getContext('2d');
 let frames=[new Uint8ClampedArray(S*S*4)],active=0,tool='pencil',brush=1,down=false,selecting=false,sel=null,start=null,hover=null,clip=null,img=null,undo=[],redo=[],hist=false,timer=null;
 let color={r:223,g:89,b:71,a:255};
 const pal=['#000000','#17191c','#2b3036','#454b52','#6c747d','#9da5ad','#d2d6da','#ffffff','#5b2333','#8f2d3f','#c53f47','#df5947','#f28c4b','#f1b34c','#f6dd72','#eef4aa','#173b32','#24624c','#2f8f61','#56b870','#8bd17c','#c4e68a','#153a55','#245f80','#3789a8','#56b7c7','#88d5d8','#31295d','#514080','#765a9c','#a77ab5','#df9fc3'];
@@ -131,12 +135,14 @@ function pix(f,x,y){if(x<0||y<0||x>=S||y>=S)return[0,0,0,0];let i=idx(x,y);retur
 function put(f,x,y,c){if(x<0||y<0||x>=S||y>=S)return;let i=idx(x,y);f[i]=c.r;f[i+1]=c.g;f[i+2]=c.b;f[i+3]=c.a}
 function erase(f,x,y){if(x<0||y<0||x>=S||y>=S)return;let i=idx(x,y);f[i]=f[i+1]=f[i+2]=f[i+3]=0}
 function norm(s){let x=Math.min(s.x1,s.x2),y=Math.min(s.y1,s.y2);return{x,y,w:Math.abs(s.x2-s.x1)+1,h:Math.abs(s.y2-s.y1)+1}}
+function rescaleFrame(source,oldSize,nextSize){let out=new Uint8ClampedArray(nextSize*nextSize*4);for(let y=0;y<nextSize;y++)for(let x=0;x<nextSize;x++){let sx=Math.min(oldSize-1,Math.floor(x*oldSize/nextSize)),sy=Math.min(oldSize-1,Math.floor(y*oldSize/nextSize)),si=(sy*oldSize+sx)*4,di=(y*nextSize+x)*4;out[di]=source[si];out[di+1]=source[si+1];out[di+2]=source[si+2];out[di+3]=source[si+3]}return out}
+function setCanvasSize(nextSize,resample=true){nextSize=clamp(Number(nextSize)||32,8,128);if(nextSize===S)return;let oldSize=S;S=nextSize;frames=resample?frames.map(f=>rescaleFrame(f,oldSize,S)):[new Uint8ClampedArray(S*S*4)];active=clamp(active,0,frames.length-1);sel=null;clip=null;undo=[];redo=[];ed.width=ed.height=S*Z;$('canvasSize').value=String(S);$('canvasReadout').textContent=S+' × '+S+' RGBA';$('canvasStatus').textContent='CANVAS '+S+' × '+S+' // LOCAL-FIRST';all()}
 function drawPixels(f,alpha=1){for(let y=0;y<S;y++)for(let x=0;x<S;x++){let i=idx(x,y),a=f[i+3]/255*alpha;if(!a)continue;cx.fillStyle=`rgba(${f[i]},${f[i+1]},${f[i+2]},${a})`;cx.fillRect(x*Z,y*Z,Z,Z)}}
 function render(){
   cx.clearRect(0,0,ed.width,ed.height);
   for(let y=0;y<S;y++)for(let x=0;x<S;x++){cx.fillStyle=(x+y)%2?'#bbb':'#ddd';cx.fillRect(x*Z,y*Z,Z,Z)}
   if($('onion').checked&&active>0)drawPixels(frames[active-1],.2);drawPixels(frame());
-  if($('grid').checked){cx.strokeStyle='#2226';cx.lineWidth=1;cx.beginPath();for(let i=0;i<=S;i++){let p=i*Z+.5;cx.moveTo(p,0);cx.lineTo(p,576);cx.moveTo(0,p);cx.lineTo(576,p)}cx.stroke()}
+  if($('grid').checked){cx.strokeStyle='#2228';cx.lineWidth=1;cx.beginPath();for(let i=0;i<=S;i++){let p=i*Z+.5;cx.moveTo(p,0);cx.lineTo(p,ed.height);cx.moveTo(0,p);cx.lineTo(ed.width,p)}cx.stroke()}
   if(sel){let n=norm(sel);cx.save();cx.setLineDash([6,4]);cx.lineWidth=2;cx.strokeStyle='#fff';cx.strokeRect(n.x*Z+1,n.y*Z+1,n.w*Z-2,n.h*Z-2);cx.lineDashOffset=5;cx.strokeStyle='#000';cx.strokeRect(n.x*Z+1,n.y*Z+1,n.w*Z-2,n.h*Z-2);cx.restore()}
   if(hover){cx.strokeStyle='#fff';cx.lineWidth=2;cx.strokeRect(hover.x*Z+1,hover.y*Z+1,brush*Z-2,brush*Z-2)}
   drawAnim(active)
@@ -155,7 +161,7 @@ ed.onpointerdown=e=>{ed.setPointerCapture(e.pointerId);let p=point(e);if(tool===
 ed.onpointermove=e=>{let p=point(e);hover=p;$('xy').textContent=`x: ${p.x} · y: ${p.y}`;if(selecting){sel.x2=p.x;sel.y2=p.y;render()}else if(down){paint(p.x,p.y);all()}else render()};
 ed.onpointerup=end;ed.onpointercancel=end;ed.onpointerleave=()=>{hover=null;$('xy').textContent='x: -- · y: --';render()};
 document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tool]').forEach(x=>x.classList.remove('on'));b.classList.add('on');tool=b.dataset.tool});
-$('brush').onchange=e=>{brush=+e.target.value;render()};$('grid').onchange=render;$('onion').onchange=render;
+$('brush').onchange=e=>{brush=+e.target.value;render()};$('grid').onchange=render;$('onion').onchange=render;$('canvasSize').onchange=e=>setCanvasSize(+e.target.value);
 function doUndo(){if(!undo.length)return;redo.push(clone(frame()));frames[active]=undo.pop();all()}function doRedo(){if(!redo.length)return;undo.push(clone(frame()));frames[active]=redo.pop();all()}
 $('undo').onclick=doUndo;$('redo').onclick=doRedo;
 function copySel(){if(!sel)return;let n=norm(sel),d=new Uint8ClampedArray(n.w*n.h*4);for(let y=0;y<n.h;y++)for(let x=0;x<n.w;x++){let si=idx(n.x+x,n.y+y),di=(y*n.w+x)*4;d.set(frame().slice(si,si+4),di)}clip={w:n.w,h:n.h,d}}
@@ -178,14 +184,15 @@ function process(){let c=document.createElement('canvas');c.width=c.height=S;let
 function quant(d,n){let ps=[];for(let i=0;i<d.data.length;i+=4)if(d.data[i+3])ps.push([d.data[i],d.data[i+1],d.data[i+2]]);if(!ps.length)return d;let boxes=[ps];while(boxes.length<n){let bi=-1,rg=-1,ch=0;boxes.forEach((b,i)=>{if(b.length<2)return;let rs=[0,1,2].map(c=>{let mn=255,mx=0;b.forEach(p=>{mn=Math.min(mn,p[c]);mx=Math.max(mx,p[c])});return mx-mn}),m=Math.max(...rs);if(m>rg){rg=m;bi=i;ch=rs.indexOf(m)}});if(bi<0)break;let b=boxes.splice(bi,1)[0].sort((a,z)=>a[ch]-z[ch]),mid=Math.floor(b.length/2);boxes.push(b.slice(0,mid),b.slice(mid))}let p=boxes.map(b=>{let s=b.reduce((a,z)=>[a[0]+z[0],a[1]+z[1],a[2]+z[2]],[0,0,0]);return s.map(v=>Math.round(v/b.length))});for(let i=0;i<d.data.length;i+=4){if(!d.data[i+3])continue;let r=d.data[i],g=d.data[i+1],bl=d.data[i+2],best=p[0],bd=1e9;p.forEach(z=>{let q=(r-z[0])**2+(g-z[1])**2+(bl-z[2])**2;if(q<bd){bd=q;best=z}});d.data[i]=best[0];d.data[i+1]=best[1];d.data[i+2]=best[2]}return d}
 $('replace').onclick=()=>{if(!img)return;history();frames[active]=process();all()};$('addImage').onclick=()=>{if(!img)return;frames.splice(active+1,0,process());active++;sel=null;all()};
 function download(b,n){let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
-$('exportFrame').onclick=()=>frameCanvas(frame()).toBlob(b=>download(b,`sprite_${String(active+1).padStart(2,'0')}_32x32.png`));
+$('exportFrame').onclick=()=>frameCanvas(frame()).toBlob(b=>download(b,'sprite_'+String(active+1).padStart(2,'0')+'_'+S+'x'+S+'.png'));
 function metrics(){let c=clamp(+$('cols').value||1,1,64),p=clamp(+$('padding').value||0,0,16),r=Math.ceil(frames.length/c);return{c,p,r,w:c*S+(c-1)*p,h:r*S+(r-1)*p}}
-$('exportSheet').onclick=()=>{let m=metrics(),c=document.createElement('canvas');c.width=m.w;c.height=m.h;let x=c.getContext('2d');frames.forEach((f,i)=>x.drawImage(frameCanvas(f),(i%m.c)*(S+m.p),Math.floor(i/m.c)*(S+m.p)));c.toBlob(b=>download(b,'sprite_sheet_32x32.png'))};
-$('exportJSON').onclick=()=>{let m=metrics(),o={frameWidth:S,frameHeight:S,columns:m.c,rows:m.r,padding:m.p,sheetWidth:m.w,sheetHeight:m.h,frames:frames.map((_,i)=>({index:i,x:(i%m.c)*(S+m.p),y:Math.floor(i/m.c)*(S+m.p),w:S,h:S}))};download(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}),'sprite_sheet.json')};
-$('save').onclick=()=>download(new Blob([JSON.stringify({app:'Pixel Forge 32',version:1,width:S,height:S,active,palette:pal,frames:frames.map(f=>Array.from(f))})],{type:'application/json'}),'pixel_forge_project.json');
-$('load').onclick=()=>$('loadFile').click();$('loadFile').onchange=async e=>{try{let o=JSON.parse(await e.target.files[0].text());if(o.width!==S||o.height!==S||!Array.isArray(o.frames))throw 0;frames=o.frames.map(a=>new Uint8ClampedArray(a));active=clamp(o.active||0,0,frames.length-1);if(Array.isArray(o.palette)){pal.splice(0,pal.length,...o.palette);renderPal()}sel=null;undo=[];redo=[];all()}catch{alert('Could not load that project file.')}};
+$('exportSheet').onclick=()=>{let m=metrics(),c=document.createElement('canvas');c.width=m.w;c.height=m.h;let x=c.getContext('2d');frames.forEach((f,i)=>x.drawImage(frameCanvas(f),(i%m.c)*(S+m.p),Math.floor(i/m.c)*(S+m.p)));c.toBlob(b=>download(b,'sprite_sheet_'+S+'x'+S+'.png'))};
+$('exportJSON').onclick=()=>{let m=metrics(),o={frameWidth:S,frameHeight:S,columns:m.c,rows:m.r,padding:m.p,sheetWidth:m.w,sheetHeight:m.h,frames:frames.map((_,i)=>({index:i,x:(i%m.c)*(S+m.p),y:Math.floor(i/m.c)*(S+m.p),w:S,h:S}))};download(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}),'sprite_sheet_'+S+'x'+S+'.json')};
+$('save').onclick=()=>download(new Blob([JSON.stringify({app:'Pixel Forge',version:2,width:S,height:S,active,palette:pal,frames:frames.map(f=>Array.from(f))})],{type:'application/json'}),'pixel_forge_project.json');
+$('load').onclick=()=>$('loadFile').click();$('loadFile').onchange=async e=>{try{let o=JSON.parse(await e.target.files[0].text());if(!Number.isInteger(o.width)||o.width!==o.height||o.width<8||o.width>128||!Array.isArray(o.frames)||!o.frames.length)throw 0;setCanvasSize(o.width,false);frames=o.frames.map(a=>{let f=new Uint8ClampedArray(a);if(f.length!==S*S*4)throw 0;return f});active=clamp(o.active||0,0,frames.length-1);if(Array.isArray(o.palette)){pal.splice(0,pal.length,...o.palette);renderPal()}sel=null;undo=[];redo=[];all()}catch{alert('Could not load that project file.')}};
 renderPal();setColor(223,89,71,255);all();
 })();
 </script>
+<script src="/13os-taskbar.js"></script>
 </body>
 </html>

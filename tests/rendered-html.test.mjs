@@ -44,6 +44,7 @@ test("serves the bundled Mottle application at /MOTTLE/", async () => {
   const html = await response.text();
   assert.match(html, /<title>MOTTLE<\/title>/i);
   assert.ok(html.length > 500_000, "expected the complete self-contained Mottle build");
+  assert.match(html, /13os-taskbar\.js/i);
 });
 
 test("normalizes /MOTTLE to its canonical trailing-slash URL", async () => {
@@ -56,8 +57,11 @@ test("serves Pixel Forge as a local 13OS application", async () => {
   const response = await request("/PIXEL-FORGE/");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /13OS \/\/ PIXEL\s*<b>FORGE<\/b>\s*32/i);
-  assert.match(html, /LOCAL APP \/\/ 513GEL/i);
+  assert.match(html, /13OS \/\/ PIXEL\s*<b>FORGE<\/b>/i);
+  assert.match(html, /CANVAS PROTOCOL/i);
+  assert.match(html, /id="canvasSize"/i);
+  assert.match(html, /function setCanvasSize/i);
+  assert.match(html, /13os-taskbar\.js/i);
 });
 
 test("normalizes /PIXEL-FORGE to its canonical trailing-slash URL", async () => {
@@ -71,6 +75,7 @@ test("serves Glyphshift from the terminal toolchain", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /GLYPHSHIFT/i);
+  assert.match(html, /13os-taskbar\.js/i);
 });
 
 test("normalizes /GLYPHSHIFT to its canonical trailing-slash URL", async () => {
