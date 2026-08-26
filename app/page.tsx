@@ -7,8 +7,9 @@ const bootLines = [
   "MEMORY INTEGRITY...........PASS",
   "SIGNAL ARRAY...............ONLINE",
   "RENDER VAULT...............MOUNTED",
-  "LOCAL OPERATOR.............IDENTIFIED",
-  "EXTERNAL ACCESS............GRANTED",
+  "ACCESS PROTOCOL............REQUESTED",
+  "OBSERVER TOKEN.............ISSUED",
+  "GUEST PRIVILEGE............GRANTED",
 ];
 
 const gallery = [
@@ -30,7 +31,8 @@ function localTime() {
 export default function Home() {
   const [booting, setBooting] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
-  const [status, setStatus] = useState("SYSTEM READY // LOCAL SESSION");
+  const [playerOpen, setPlayerOpen] = useState(false);
+  const [status, setStatus] = useState("ACCESS GATE // GUEST SESSION READY");
   const [clock, setClock] = useState("");
   const [selectedWork, setSelectedWork] = useState(gallery[0]);
 
@@ -60,6 +62,11 @@ export default function Home() {
     setMenuOpen(false);
     setStatus(nextStatus);
     document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function togglePlayer() {
+    setPlayerOpen((open) => !open);
+    setStatus(playerOpen ? "MEDIA DOCK // STANDBY" : "RUDE BOI HOURS // PLAYER OPEN");
   }
 
   return (
@@ -106,19 +113,19 @@ export default function Home() {
             </div>
           </section>
 
-          <aside className="window status-window" aria-label="System status">
-            <div className="window-bar"><span>SYS://STATUS</span><span>LIVE</span></div>
+          <aside className="window status-window" aria-label="Terminal access status">
+            <div className="window-bar"><span>ACCESS://GATE</span><span>GRANTED</span></div>
             <div className="status-body">
               <div className="operator-card">
                 <img src="/brand/oni-emblem.png" alt="" />
-                <div><span className="operator-name">513GEL</span><span className="operator-state"><i /> LOCAL OPERATOR</span></div>
+                <div><span className="operator-name">EXTERNAL VISITOR</span><span className="operator-state"><i /> READ-ONLY CREDENTIAL</span></div>
               </div>
               <dl className="metrics">
-                <div><dt>RENDER VAULT</dt><dd>{workCount} INDEXED</dd></div>
-                <div><dt>TOOLCHAIN</dt><dd>03 ONLINE</dd></div>
-                <div><dt>NETWORK</dt><dd>13TH ONI</dd></div>
+                <div><dt>ACCESS TIER</dt><dd>GUEST / 013</dd></div>
+                <div><dt>PRIVILEGE</dt><dd>VIEW + TOOLS</dd></div>
+                <div><dt>IDENTITY</dt><dd>OBFUSCATED</dd></div>
               </dl>
-              <p className="system-note">No feed. No algorithm. Just work, source files, and a few useful machines.</p>
+              <p className="system-note">You are inside a personal system as an admitted guest. Account authorization protocol is pending.</p>
             </div>
           </aside>
 
@@ -181,17 +188,12 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="signal-archive" id="signals" aria-labelledby="playlist-title">
-        <header className="section-header"><span>RUDE BOI HOURS // SIGNAL 02</span><span>SPOTIFY UPLINK</span></header>
-        <div className="signal-panel">
-          <div className="signal-copy">
-            <span className="eyebrow">CURATED TRANSMISSION</span>
-            <h2 id="playlist-title">RUDE BOI<br />HOURS.</h2>
-            <p>The part of the desktop that stays awake after everything else has stopped behaving.</p>
-          </div>
-          <iframe data-testid="embed-iframe" className="spotify-player" src="https://open.spotify.com/embed/playlist/4HSwiGun7jGSpFbPBj7J8a?utm_source=generator&theme=0&si=2da6b42ffd8843b5" width="100%" height="352" frameBorder="0" allowFullScreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy" title="Rude Boi Hours Spotify playlist" />
-        </div>
-      </section>
+      {playerOpen && (
+        <section className="media-dock" aria-label="Rude Boi Hours media dock">
+          <header><span>RUDE BOI HOURS // SPOTIFY UPLINK</span><button type="button" onClick={togglePlayer}>MINIMIZE ×</button></header>
+          <iframe data-testid="embed-iframe" className="spotify-player" src="https://open.spotify.com/embed/playlist/4HSwiGun7jGSpFbPBj7J8a?utm_source=generator&theme=0&si=2da6b42ffd8843b5" width="100%" height="152" frameBorder="0" allowFullScreen allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" title="Rude Boi Hours Spotify playlist" />
+        </section>
+      )}
 
       {menuOpen && (
         <nav className="start-menu" aria-label="Start menu">
@@ -202,16 +204,17 @@ export default function Home() {
           <a href="/MOTTLE/">◌ MOTTLE</a>
           <a href="/PIXEL-FORGE/">▦ PIXEL FORGE 32</a>
           <a href="/GLYPHSHIFT/">▧ GLYPHSHIFT</a>
-          <button type="button" onClick={() => jump("signals", "RUDE BOI HOURS // TUNED")}>♫ RUDE BOI HOURS</button>
+          <button type="button" onClick={togglePlayer}>♫ RUDE BOI HOURS</button>
         </nav>
       )}
 
       <footer className="taskbar" aria-live="polite">
         <button className="start-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}>十三鬼 <span>START</span></button>
         <div className="taskbar-apps"><button type="button" onClick={() => jump("home", "HOME TERMINAL // READY")}>HOME</button><a href="/MOTTLE/">MOTTLE</a><a href="/PIXEL-FORGE/">PIXEL FORGE</a><a href="/GLYPHSHIFT/">GLYPHSHIFT</a></div>
+        <button className={`media-button ${playerOpen ? "is-active" : ""}`} type="button" onClick={togglePlayer} aria-expanded={playerOpen}>♫ RUDE BOI HOURS <span>{playerOpen ? "MINIMIZE" : "PLAYER"}</span></button>
         <span className="taskbar-status">{status}</span>
         <span className="taskbar-clock">LOCAL {clock}</span>
-        <span className="taskbar-user"><img src="/brand/oni-emblem.png" alt="" /> 513GEL</span>
+        <span className="taskbar-user"><img src="/brand/oni-emblem.png" alt="" /> GUEST ACCESS</span>
       </footer>
     </main>
   );
