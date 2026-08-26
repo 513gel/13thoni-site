@@ -20,7 +20,7 @@ export default function PrivateReviewPage() {
   const [manifest, setManifest] = useState<ReviewManifest>(emptyManifest);
   const [loading, setLoading] = useState(true);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [locked, setLocked] = useState(false);
+  const [locked, setLocked] = useState(true);
   const [pin, setPin] = useState("");
   const [pinError, setPinError] = useState("");
 
@@ -36,8 +36,8 @@ export default function PrivateReviewPage() {
   }, []);
 
   useEffect(() => {
-    loadManifest().catch(() => { setManifest(emptyManifest); setLoading(false); });
-  }, [loadManifest]);
+    setLoading(false);
+  }, []);
 
   async function unlock(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
