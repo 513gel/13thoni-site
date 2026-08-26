@@ -9,12 +9,12 @@ const mono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://13thoni.com"),
-  title: "13th Oni — External Terminal",
-  description: "Access the 13th Oni external archive terminal.",
+  title: "13th Oni — Personal Terminal",
+  description: "The 13th Oni personal terminal: renders, wallpapers, tools, and signal archives.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "13th Oni — External Terminal",
-    description: "Unlucky for most. Lucky for me.",
+    title: "13th Oni — Personal Terminal",
+    description: "Renders, wallpapers, tools, and the current signal.",
     url: "https://13thoni.com",
     siteName: "13th Oni",
     type: "website",

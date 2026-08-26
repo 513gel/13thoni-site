@@ -26,14 +26,15 @@ async function request(pathname) {
   );
 }
 
-test("renders the 13th Oni terminal with an open Mottle target", async () => {
+test("renders the 13th Oni personal terminal with its local applications", async () => {
   const response = await request("/");
   assert.equal(response.status, 200);
   const html = await response.text();
-  assert.match(html, /13th Oni — External Terminal/i);
+  assert.match(html, /13th Oni — Personal Terminal/i);
   assert.match(html, /href="\/MOTTLE\/"/i);
-  assert.match(html, /MOTTLE/);
-  assert.match(html, /OPEN/);
+  assert.match(html, /href="\/PIXEL-FORGE\/"/i);
+  assert.match(html, /RENDER VAULT/);
+  assert.match(html, /RUDE BOI HOURS/);
 });
 
 test("serves the bundled Mottle application at /MOTTLE/", async () => {
@@ -49,6 +50,20 @@ test("normalizes /MOTTLE to its canonical trailing-slash URL", async () => {
   const response = await request("/MOTTLE");
   assert.equal(response.status, 308);
   assert.equal(response.headers.get("location"), "http://localhost/MOTTLE/");
+});
+
+test("serves Pixel Forge as a local 13OS application", async () => {
+  const response = await request("/PIXEL-FORGE/");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /13OS \/\/ PIXEL\s*<b>FORGE<\/b>\s*32/i);
+  assert.match(html, /LOCAL APP \/\/ 513GEL/i);
+});
+
+test("normalizes /PIXEL-FORGE to its canonical trailing-slash URL", async () => {
+  const response = await request("/PIXEL-FORGE");
+  assert.equal(response.status, 308);
+  assert.equal(response.headers.get("location"), "http://localhost/PIXEL-FORGE/");
 });
 
 test("ships the Mottle source as a public deployment asset", async () => {

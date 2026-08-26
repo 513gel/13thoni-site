@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pixel Forge 32</title>
+<style>
+ :root{--bg:#050506;--p:#101112;--p2:#161718;--line:rgba(236,236,230,.22);--txt:#ecece6;--mut:#90918b;--red:#e32232}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font-family:"Courier New",monospace;height:100%}
+body{overflow:hidden}button,input,select{font:inherit}button{background:#161718;color:var(--txt);border:1px solid var(--line);border-radius:0;padding:7px 9px;cursor:pointer}button:hover{background:#e9e9e3;color:#050505}button.on{background:var(--red);border-color:var(--red)}
+input,select{background:#090a0a;color:var(--txt);border:1px solid var(--line);border-radius:0;padding:6px}input[type=range]{padding:0;width:100%}
+header{height:48px;background:#090a0a;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 14px}
+.brand{font-weight:800;letter-spacing:.12em}.brand b{color:var(--red)}.muted,.help{color:var(--mut);font-size:12px}.help{line-height:1.4}
+main{height:calc(100% - 90px);display:grid;grid-template-columns:290px minmax(580px,1fr) 330px;gap:8px;padding:8px}
+.col{display:flex;flex-direction:column;gap:8px;min-height:0}.panel{background:var(--p);border:1px solid var(--line);border-radius:0;padding:10px;overflow:auto}
+h2{font-size:12px;letter-spacing:.12em;text-transform:uppercase;margin:0 0 9px;color:#cbd0d5}h3{font-size:12px;color:var(--mut);margin:12px 0 6px}
+.row{display:flex;align-items:center;gap:6px}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.field{display:grid;grid-template-columns:1fr 90px;gap:8px;align-items:center;margin:7px 0}.field label{font-size:12px;color:var(--mut)}
+.full{width:100%}.tools{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.tools button{font-size:12px;min-height:38px}
+.center{background:var(--p);border:1px solid var(--line);border-radius:0;min-height:0;display:flex;flex-direction:column;overflow:hidden}
+.bar{height:42px;padding:7px 10px;background:#090a0a;display:flex;align-items:center;justify-content:space-between}.bar.top{border-bottom:1px solid var(--line)}.bar.bottom{border-top:1px solid var(--line)}
+.stage{flex:1;min-height:0;display:grid;place-items:center;overflow:auto;background:#0b0c0c}
+#editor{width:576px;height:576px;border:1px solid #606972;box-shadow:0 12px 40px #0008;image-rendering:pixelated;touch-action:none;cursor:crosshair}
+#source{width:100%;aspect-ratio:1;background:#fff;border:1px solid var(--line);image-rendering:pixelated}
+.colors{display:grid;grid-template-columns:90px 1fr;gap:8px}.colorBox{height:58px;border:1px solid var(--line);border-radius:5px}
+.palette{display:grid;grid-template-columns:repeat(8,1fr);gap:4px}.sw{aspect-ratio:1;border:1px solid #ffffff2c;border-radius:3px;cursor:pointer}
+.frames{display:flex;gap:7px;overflow-x:auto;padding:4px 1px 8px}.frame{min-width:58px;background:#111;border:1px solid var(--line);border-radius:5px;padding:4px;cursor:pointer}.frame.active{outline:2px solid var(--red)}
+.frame canvas{width:48px;height:48px;display:block;image-rendering:pixelated;background:#ddd}.num{text-align:center;font-size:10px;color:var(--mut);margin-top:2px}
+#anim{width:112px;height:112px;border:1px solid var(--line);image-rendering:pixelated;background:#25292d}
+kbd{font-family:Consolas,monospace;background:#0d0f10;border:1px solid var(--line);border-radius:3px;padding:1px 3px;font-size:10px}
+.hidden{display:none}
+footer{height:42px;border-top:1px solid var(--line);background:#090a0a;display:flex;align-items:center;gap:0;font-size:10px;letter-spacing:.1em;position:relative;z-index:4}footer a,footer span{height:100%;display:flex;align-items:center;padding:0 12px;border-right:1px solid #ffffff18;color:var(--txt);text-decoration:none}footer .home{background:var(--red);font-size:12px}footer .state{margin-left:auto;color:var(--mut)}footer a:hover{background:#e9e9e3;color:#050505}
+@media(max-width:1180px){body{overflow:auto}main{height:auto;grid-template-columns:1fr}.center{min-height:690px}footer{position:sticky;bottom:0}}
+</style>
+</head>
+<body>
+<header><div class="brand">13OS // PIXEL <b>FORGE</b> 32</div><div class="muted">LOCAL APP · TRUE 32×32 SPRITE WORKSTATION</div></header>
+<main>
+<section class="col">
+  <div class="panel">
+    <h2>Import and Convert</h2>
+    <input id="file" class="full" type="file" accept="image/*">
+    <canvas id="source" width="256" height="256"></canvas>
+    <div class="field"><label>Fit</label><select id="fit"><option value="contain">Contain</option><option value="cover">Crop to fill</option><option value="stretch">Stretch</option></select></div>
+    <div class="field"><label>Sampling</label><select id="sample"><option value="smooth">Smooth</option><option value="nearest">Nearest</option></select></div>
+    <div class="field"><label>Color limit</label><select id="limit"><option value="0">Full color</option><option>32</option><option>16</option><option>8</option><option>4</option></select></div>
+    <div class="field"><label>Brightness</label><input id="bright" type="range" min="-100" max="100" value="0"></div>
+    <div class="field"><label>Contrast</label><input id="contrast" type="range" min="-100" max="100" value="0"></div>
+    <div class="field"><label>Saturation</label><input id="sat" type="range" min="-100" max="100" value="0"></div>
+    <div class="field"><label>Alpha cutoff</label><input id="cut" type="range" min="0" max="255" value="20"></div>
+    <div class="grid2"><button id="replace">Replace frame</button><button id="addImage">Add as frame</button></div>
+    <p class="help">Imports are converted to a real 32×32 RGBA image. Transparent pixels remain transparent.</p>
+  </div>
+  <div class="panel">
+    <h2>Tools</h2>
+    <div class="tools">
+      <button class="on" data-tool="pencil">Pencil <kbd>P</kbd></button>
+      <button data-tool="eraser">Eraser <kbd>E</kbd></button>
+      <button data-tool="pick">Pick <kbd>I</kbd></button>
+      <button data-tool="fill">Fill <kbd>F</kbd></button>
+      <button data-tool="select">Select <kbd>S</kbd></button>
+    </div>
+    <div class="field"><label>Square brush</label><select id="brush"><option value="1">1×1</option><option value="2">2×2</option><option value="3">3×3</option><option value="4">4×4</option></select></div>
+    <label class="help"><input id="grid" type="checkbox" checked> Show grid</label><br>
+    <label class="help"><input id="onion" type="checkbox"> Previous-frame onion skin</label>
+    <h3>Selection</h3>
+    <div class="grid3">
+      <button id="copy">Copy</button><button id="paste">Paste</button><button id="clear">Clear</button>
+      <button id="deselect">Deselect</button><button id="flipH">Flip H</button><button id="flipV">Flip V</button>
+    </div>
+    <p class="help">Arrow keys move selected pixels. Delete clears them. Copy and paste use an internal pixel clipboard.</p>
+  </div>
+</section>
+
+<section class="center">
+  <div class="bar top"><div class="row"><button id="undo">Undo <kbd>Ctrl Z</kbd></button><button id="redo">Redo <kbd>Ctrl Y</kbd></button></div><div id="xy" class="muted">x: -- · y: --</div></div>
+  <div class="stage"><canvas id="editor" width="576" height="576"></canvas></div>
+  <div class="bar bottom"><div id="frameText" class="muted">Frame 1 / 1</div><div class="muted">32 × 32 RGBA</div></div>
+</section>
+
+<section class="col">
+  <div class="panel">
+    <h2>Color</h2>
+    <div class="colors">
+      <div id="current" class="colorBox"></div>
+      <div>
+        <input id="color" type="color" value="#df5947" class="full">
+        <input id="hex" value="#df5947" maxlength="7" class="full" style="margin-top:6px">
+      </div>
+    </div>
+    <div class="field"><label>Opacity</label><input id="alpha" type="range" min="0" max="255" value="255"></div>
+    <button id="addColor" class="full">Add current color to palette</button>
+    <h3>Palette</h3><div id="palette" class="palette"></div>
+    <p class="help">The color picker uses the full 24-bit RGB range plus alpha, rather than a restricted built-in palette.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Frames</h2>
+    <div class="row"><canvas id="anim" width="112" height="112"></canvas><div style="flex:1">
+      <div class="grid2"><button id="play">Play</button><button id="stop">Stop</button></div>
+      <div class="field"><label>FPS</label><input id="fps" type="number" min="1" max="30" value="8"></div>
+    </div></div>
+    <div id="frames" class="frames"></div>
+    <div class="grid3"><button id="newFrame">New</button><button id="duplicate">Duplicate</button><button id="deleteFrame">Delete</button></div>
+  </div>
+
+  <div class="panel">
+    <h2>Export</h2>
+    <div class="field"><label>Sheet columns</label><input id="cols" type="number" min="1" max="64" value="8"></div>
+    <div class="field"><label>Frame spacing</label><input id="padding" type="number" min="0" max="16" value="0"></div>
+    <div class="grid2">
+      <button id="exportFrame">Frame PNG</button><button id="exportSheet">Sheet PNG</button>
+      <button id="exportJSON">Sheet JSON</button><button id="save">Save project</button>
+    </div>
+    <input id="loadFile" class="hidden" type="file" accept=".json,application/json">
+    <button id="load" class="full" style="margin-top:6px">Load project</button>
+    <p class="help">Every frame is exported at exactly 32×32 pixels. Sprite sheets remain transparent PNG files.</p>
+  </div>
+</section>
+</main>
+<footer><a class="home" href="/">十三鬼</a><a href="/">HOME</a><a href="/MOTTLE/">MOTTLE</a><span>PIXEL FORGE 32</span><span class="state">LOCAL APP // 513GEL</span></footer>
+
+<script>
+(()=>{'use strict';
+const S=32,Z=18,$=id=>document.getElementById(id),ed=$('editor'),cx=ed.getContext('2d'),src=$('source'),sc=src.getContext('2d'),anim=$('anim'),ac=anim.getContext('2d');
+let frames=[new Uint8ClampedArray(S*S*4)],active=0,tool='pencil',brush=1,down=false,selecting=false,sel=null,start=null,hover=null,clip=null,img=null,undo=[],redo=[],hist=false,timer=null;
+let color={r:223,g:89,b:71,a:255};
+const pal=['#000000','#17191c','#2b3036','#454b52','#6c747d','#9da5ad','#d2d6da','#ffffff','#5b2333','#8f2d3f','#c53f47','#df5947','#f28c4b','#f1b34c','#f6dd72','#eef4aa','#173b32','#24624c','#2f8f61','#56b870','#8bd17c','#c4e68a','#153a55','#245f80','#3789a8','#56b7c7','#88d5d8','#31295d','#514080','#765a9c','#a77ab5','#df9fc3'];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),idx=(x,y)=>(y*S+x)*4,clone=f=>new Uint8ClampedArray(f),frame=()=>frames[active];
+function pix(f,x,y){if(x<0||y<0||x>=S||y>=S)return[0,0,0,0];let i=idx(x,y);return[f[i],f[i+1],f[i+2],f[i+3]]}
+function put(f,x,y,c){if(x<0||y<0||x>=S||y>=S)return;let i=idx(x,y);f[i]=c.r;f[i+1]=c.g;f[i+2]=c.b;f[i+3]=c.a}
+function erase(f,x,y){if(x<0||y<0||x>=S||y>=S)return;let i=idx(x,y);f[i]=f[i+1]=f[i+2]=f[i+3]=0}
+function norm(s){let x=Math.min(s.x1,s.x2),y=Math.min(s.y1,s.y2);return{x,y,w:Math.abs(s.x2-s.x1)+1,h:Math.abs(s.y2-s.y1)+1}}
+function drawPixels(f,alpha=1){for(let y=0;y<S;y++)for(let x=0;x<S;x++){let i=idx(x,y),a=f[i+3]/255*alpha;if(!a)continue;cx.fillStyle=`rgba(${f[i]},${f[i+1]},${f[i+2]},${a})`;cx.fillRect(x*Z,y*Z,Z,Z)}}
+function render(){
+  cx.clearRect(0,0,ed.width,ed.height);
+  for(let y=0;y<S;y++)for(let x=0;x<S;x++){cx.fillStyle=(x+y)%2?'#bbb':'#ddd';cx.fillRect(x*Z,y*Z,Z,Z)}
+  if($('onion').checked&&active>0)drawPixels(frames[active-1],.2);drawPixels(frame());
+  if($('grid').checked){cx.strokeStyle='#2226';cx.lineWidth=1;cx.beginPath();for(let i=0;i<=S;i++){let p=i*Z+.5;cx.moveTo(p,0);cx.lineTo(p,576);cx.moveTo(0,p);cx.lineTo(576,p)}cx.stroke()}
+  if(sel){let n=norm(sel);cx.save();cx.setLineDash([6,4]);cx.lineWidth=2;cx.strokeStyle='#fff';cx.strokeRect(n.x*Z+1,n.y*Z+1,n.w*Z-2,n.h*Z-2);cx.lineDashOffset=5;cx.strokeStyle='#000';cx.strokeRect(n.x*Z+1,n.y*Z+1,n.w*Z-2,n.h*Z-2);cx.restore()}
+  if(hover){cx.strokeStyle='#fff';cx.lineWidth=2;cx.strokeRect(hover.x*Z+1,hover.y*Z+1,brush*Z-2,brush*Z-2)}
+  drawAnim(active)
+}
+function frameCanvas(f){let c=document.createElement('canvas');c.width=c.height=S;c.getContext('2d').putImageData(new ImageData(clone(f),S,S),0,0);return c}
+function drawAnim(i){ac.clearRect(0,0,112,112);ac.imageSmoothingEnabled=false;ac.drawImage(frameCanvas(frames[i]),0,0,112,112)}
+function renderFrames(){let h=$('frames');h.innerHTML='';frames.forEach((f,i)=>{let d=document.createElement('div');d.className='frame'+(i===active?' active':'');let c=frameCanvas(f),n=document.createElement('div');n.className='num';n.textContent=String(i+1).padStart(2,'0');d.append(c,n);d.onclick=()=>{active=i;sel=null;undo=[];redo=[];all()};h.append(d)});$('frameText').textContent=`Frame ${active+1} / ${frames.length}`}
+const all=()=>{render();renderFrames()};
+function point(e){let r=ed.getBoundingClientRect();return{x:clamp(Math.floor((e.clientX-r.left)/r.width*S),0,S-1),y:clamp(Math.floor((e.clientY-r.top)/r.height*S),0,S-1)}}
+function history(){undo.push(clone(frame()));if(undo.length>80)undo.shift();redo=[]}
+function begin(){if(!hist){history();hist=true}}function end(){down=false;selecting=false;hist=false}
+function paint(x,y){for(let yy=0;yy<brush;yy++)for(let xx=0;xx<brush;xx++)tool==='eraser'?erase(frame(),x+xx,y+yy):put(frame(),x+xx,y+yy,color)}
+function fill(x,y){let f=frame(),t=pix(f,x,y),r=[color.r,color.g,color.b,color.a];if(t.every((v,i)=>v===r[i]))return;history();let q=[[x,y]],seen=new Uint8Array(S*S);while(q.length){let [a,b]=q.pop();if(a<0||b<0||a>=S||b>=S||seen[b*S+a])continue;seen[b*S+a]=1;let p=pix(f,a,b);if(!p.every((v,i)=>v===t[i]))continue;put(f,a,b,color);q.push([a+1,b],[a-1,b],[a,b+1],[a,b-1])}all()}
+ed.oncontextmenu=e=>e.preventDefault();
+ed.onpointerdown=e=>{ed.setPointerCapture(e.pointerId);let p=point(e);if(tool==='select'){selecting=true;start=p;sel={x1:p.x,y1:p.y,x2:p.x,y2:p.y};render();return}if(tool==='pick'){let c=pix(frame(),p.x,p.y);setColor(c[0],c[1],c[2],c[3]);return}if(tool==='fill'){fill(p.x,p.y);return}down=true;begin();paint(p.x,p.y);all()};
+ed.onpointermove=e=>{let p=point(e);hover=p;$('xy').textContent=`x: ${p.x} · y: ${p.y}`;if(selecting){sel.x2=p.x;sel.y2=p.y;render()}else if(down){paint(p.x,p.y);all()}else render()};
+ed.onpointerup=end;ed.onpointercancel=end;ed.onpointerleave=()=>{hover=null;$('xy').textContent='x: -- · y: --';render()};
+document.querySelectorAll('[data-tool]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-tool]').forEach(x=>x.classList.remove('on'));b.classList.add('on');tool=b.dataset.tool});
+$('brush').onchange=e=>{brush=+e.target.value;render()};$('grid').onchange=render;$('onion').onchange=render;
+function doUndo(){if(!undo.length)return;redo.push(clone(frame()));frames[active]=undo.pop();all()}function doRedo(){if(!redo.length)return;undo.push(clone(frame()));frames[active]=redo.pop();all()}
+$('undo').onclick=doUndo;$('redo').onclick=doRedo;
+function copySel(){if(!sel)return;let n=norm(sel),d=new Uint8ClampedArray(n.w*n.h*4);for(let y=0;y<n.h;y++)for(let x=0;x<n.w;x++){let si=idx(n.x+x,n.y+y),di=(y*n.w+x)*4;d.set(frame().slice(si,si+4),di)}clip={w:n.w,h:n.h,d}}
+function pasteSel(){if(!clip)return;history();let x=sel?norm(sel).x:Math.floor((S-clip.w)/2),y=sel?norm(sel).y:Math.floor((S-clip.h)/2);for(let yy=0;yy<clip.h;yy++)for(let xx=0;xx<clip.w;xx++){let i=(yy*clip.w+xx)*4;put(frame(),x+xx,y+yy,{r:clip.d[i],g:clip.d[i+1],b:clip.d[i+2],a:clip.d[i+3]})}sel={x1:x,y1:y,x2:x+clip.w-1,y2:y+clip.h-1};all()}
+function clearSel(){if(!sel)return;history();let n=norm(sel);for(let y=n.y;y<n.y+n.h;y++)for(let x=n.x;x<n.x+n.w;x++)erase(frame(),x,y);all()}
+function flip(h){if(!sel)return;history();let n=norm(sel),o=clone(frame());for(let y=0;y<n.h;y++)for(let x=0;x<n.w;x++){let sx=h?n.x+n.w-1-x:n.x+x,sy=h?n.y+y:n.y+n.h-1-y,p=pix(o,sx,sy);put(frame(),n.x+x,n.y+y,{r:p[0],g:p[1],b:p[2],a:p[3]})}all()}
+function move(dx,dy){if(!sel)return;let n=norm(sel),nx=clamp(n.x+dx,0,S-n.w),ny=clamp(n.y+dy,0,S-n.h);if(nx===n.x&&ny===n.y)return;history();let d=new Uint8ClampedArray(n.w*n.h*4);for(let y=0;y<n.h;y++)for(let x=0;x<n.w;x++){let p=pix(frame(),n.x+x,n.y+y);d.set(p,(y*n.w+x)*4);erase(frame(),n.x+x,n.y+y)}for(let y=0;y<n.h;y++)for(let x=0;x<n.w;x++){let i=(y*n.w+x)*4;put(frame(),nx+x,ny+y,{r:d[i],g:d[i+1],b:d[i+2],a:d[i+3]})}sel={x1:nx,y1:ny,x2:nx+n.w-1,y2:ny+n.h-1};all()}
+$('copy').onclick=copySel;$('paste').onclick=pasteSel;$('clear').onclick=clearSel;$('deselect').onclick=()=>{sel=null;render()};$('flipH').onclick=()=>flip(true);$('flipV').onclick=()=>flip(false);
+document.onkeydown=e=>{if(['INPUT','SELECT'].includes(document.activeElement.tagName))return;let k=e.key.toLowerCase();if((e.ctrlKey||e.metaKey)&&k==='z'){e.preventDefault();e.shiftKey?doRedo():doUndo();return}if((e.ctrlKey||e.metaKey)&&k==='y'){e.preventDefault();doRedo();return}let m={p:'pencil',e:'eraser',i:'pick',f:'fill',s:'select'};if(m[k]){tool=m[k];document.querySelectorAll('[data-tool]').forEach(b=>b.classList.toggle('on',b.dataset.tool===tool))}if(e.key==='Delete')clearSel();if(e.key==='ArrowLeft'){e.preventDefault();move(-1,0)}if(e.key==='ArrowRight'){e.preventDefault();move(1,0)}if(e.key==='ArrowUp'){e.preventDefault();move(0,-1)}if(e.key==='ArrowDown'){e.preventDefault();move(0,1)}};
+$('newFrame').onclick=()=>{frames.splice(active+1,0,new Uint8ClampedArray(S*S*4));active++;sel=null;undo=[];redo=[];all()};$('duplicate').onclick=()=>{frames.splice(active+1,0,clone(frame()));active++;sel=null;undo=[];redo=[];all()};$('deleteFrame').onclick=()=>{if(frames.length===1)frames[0]=new Uint8ClampedArray(S*S*4);else{frames.splice(active,1);active=Math.min(active,frames.length-1)}sel=null;all()};
+$('play').onclick=()=>{clearInterval(timer);let i=0,fps=clamp(+$('fps').value||8,1,30);timer=setInterval(()=>{drawAnim(i);i=(i+1)%frames.length},1000/fps)};$('stop').onclick=()=>{clearInterval(timer);timer=null;drawAnim(active)};
+const hex=(r,g,b)=>'#'+[r,g,b].map(v=>clamp(Math.round(v),0,255).toString(16).padStart(2,'0')).join('');
+function fromHex(v){v=v.replace('#','');return/^[0-9a-f]{6}$/i.test(v)?{r:parseInt(v.slice(0,2),16),g:parseInt(v.slice(2,4),16),b:parseInt(v.slice(4),16)}:null}
+function setColor(r,g,b,a=255){color={r,g,b,a};let h=hex(r,g,b);$('color').value=h;$('hex').value=h;$('alpha').value=a;$('current').style.background=`rgba(${r},${g},${b},${a/255})`}
+$('color').oninput=e=>{let c=fromHex(e.target.value);setColor(c.r,c.g,c.b,color.a)};$('hex').onchange=e=>{let c=fromHex(e.target.value);if(c)setColor(c.r,c.g,c.b,color.a)};$('alpha').oninput=e=>setColor(color.r,color.g,color.b,+e.target.value);
+function renderPal(){let p=$('palette');p.innerHTML='';pal.forEach(h=>{let s=document.createElement('div');s.className='sw';s.style.background=h;s.title=h;s.onclick=()=>{let c=fromHex(h);setColor(c.r,c.g,c.b,color.a)};p.append(s)})}
+$('addColor').onclick=()=>{let h=hex(color.r,color.g,color.b);if(!pal.includes(h))pal.push(h);renderPal()};
+$('file').onchange=e=>{let f=e.target.files[0];if(!f)return;let u=URL.createObjectURL(f),im=new Image();im.onload=()=>{img=im;sc.clearRect(0,0,256,256);sc.fillStyle='#fff';sc.fillRect(0,0,256,256);let z=Math.min(256/im.width,256/im.height),w=im.width*z,h=im.height*z;sc.drawImage(im,(256-w)/2,(256-h)/2,w,h);URL.revokeObjectURL(u)};im.src=u};
+function process(){let c=document.createElement('canvas');c.width=c.height=S;let x=c.getContext('2d');x.imageSmoothingEnabled=$('sample').value==='smooth';let iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height,m=$('fit').value;if(m==='stretch')x.drawImage(img,0,0,S,S);else if(m==='contain'){let z=Math.min(S/iw,S/ih),w=iw*z,h=ih*z;x.drawImage(img,(S-w)/2,(S-h)/2,w,h)}else{let z=Math.max(S/iw,S/ih),sw=S/z,sh=S/z;x.drawImage(img,(iw-sw)/2,(ih-sh)/2,sw,sh,0,0,S,S)}let d=x.getImageData(0,0,S,S),b=+$('bright').value*2.55,ct=+$('contrast').value,sa=1+ +$('sat').value/100,fac=(259*(ct+255))/(255*(259-ct)),cut=+$('cut').value;for(let i=0;i<d.data.length;i+=4){if(d.data[i+3]<cut){d.data[i]=d.data[i+1]=d.data[i+2]=d.data[i+3]=0;continue}let r=fac*(d.data[i]-128)+128+b,g=fac*(d.data[i+1]-128)+128+b,bl=fac*(d.data[i+2]-128)+128+b,gr=.299*r+.587*g+.114*bl;d.data[i]=clamp(gr+(r-gr)*sa,0,255);d.data[i+1]=clamp(gr+(g-gr)*sa,0,255);d.data[i+2]=clamp(gr+(bl-gr)*sa,0,255);d.data[i+3]=255}let lim=+$('limit').value;if(lim)d=quant(d,lim);return new Uint8ClampedArray(d.data)}
+function quant(d,n){let ps=[];for(let i=0;i<d.data.length;i+=4)if(d.data[i+3])ps.push([d.data[i],d.data[i+1],d.data[i+2]]);if(!ps.length)return d;let boxes=[ps];while(boxes.length<n){let bi=-1,rg=-1,ch=0;boxes.forEach((b,i)=>{if(b.length<2)return;let rs=[0,1,2].map(c=>{let mn=255,mx=0;b.forEach(p=>{mn=Math.min(mn,p[c]);mx=Math.max(mx,p[c])});return mx-mn}),m=Math.max(...rs);if(m>rg){rg=m;bi=i;ch=rs.indexOf(m)}});if(bi<0)break;let b=boxes.splice(bi,1)[0].sort((a,z)=>a[ch]-z[ch]),mid=Math.floor(b.length/2);boxes.push(b.slice(0,mid),b.slice(mid))}let p=boxes.map(b=>{let s=b.reduce((a,z)=>[a[0]+z[0],a[1]+z[1],a[2]+z[2]],[0,0,0]);return s.map(v=>Math.round(v/b.length))});for(let i=0;i<d.data.length;i+=4){if(!d.data[i+3])continue;let r=d.data[i],g=d.data[i+1],bl=d.data[i+2],best=p[0],bd=1e9;p.forEach(z=>{let q=(r-z[0])**2+(g-z[1])**2+(bl-z[2])**2;if(q<bd){bd=q;best=z}});d.data[i]=best[0];d.data[i+1]=best[1];d.data[i+2]=best[2]}return d}
+$('replace').onclick=()=>{if(!img)return;history();frames[active]=process();all()};$('addImage').onclick=()=>{if(!img)return;frames.splice(active+1,0,process());active++;sel=null;all()};
+function download(b,n){let a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=n;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+$('exportFrame').onclick=()=>frameCanvas(frame()).toBlob(b=>download(b,`sprite_${String(active+1).padStart(2,'0')}_32x32.png`));
+function metrics(){let c=clamp(+$('cols').value||1,1,64),p=clamp(+$('padding').value||0,0,16),r=Math.ceil(frames.length/c);return{c,p,r,w:c*S+(c-1)*p,h:r*S+(r-1)*p}}
+$('exportSheet').onclick=()=>{let m=metrics(),c=document.createElement('canvas');c.width=m.w;c.height=m.h;let x=c.getContext('2d');frames.forEach((f,i)=>x.drawImage(frameCanvas(f),(i%m.c)*(S+m.p),Math.floor(i/m.c)*(S+m.p)));c.toBlob(b=>download(b,'sprite_sheet_32x32.png'))};
+$('exportJSON').onclick=()=>{let m=metrics(),o={frameWidth:S,frameHeight:S,columns:m.c,rows:m.r,padding:m.p,sheetWidth:m.w,sheetHeight:m.h,frames:frames.map((_,i)=>({index:i,x:(i%m.c)*(S+m.p),y:Math.floor(i/m.c)*(S+m.p),w:S,h:S}))};download(new Blob([JSON.stringify(o,null,2)],{type:'application/json'}),'sprite_sheet.json')};
+$('save').onclick=()=>download(new Blob([JSON.stringify({app:'Pixel Forge 32',version:1,width:S,height:S,active,palette:pal,frames:frames.map(f=>Array.from(f))})],{type:'application/json'}),'pixel_forge_project.json');
+$('load').onclick=()=>$('loadFile').click();$('loadFile').onchange=async e=>{try{let o=JSON.parse(await e.target.files[0].text());if(o.width!==S||o.height!==S||!Array.isArray(o.frames))throw 0;frames=o.frames.map(a=>new Uint8ClampedArray(a));active=clamp(o.active||0,0,frames.length-1);if(Array.isArray(o.palette)){pal.splice(0,pal.length,...o.palette);renderPal()}sel=null;undo=[];redo=[];all()}catch{alert('Could not load that project file.')}};
+renderPal();setColor(223,89,71,255);all();
+})();
+</script>
+</body>
+</html>

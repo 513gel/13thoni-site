@@ -44,6 +44,16 @@ const worker = {
       return env.ASSETS.fetch(new Request(url, request));
     }
 
+    if (url.pathname === "/PIXEL-FORGE") {
+      url.pathname = "/PIXEL-FORGE/";
+      return Response.redirect(url.toString(), 308);
+    }
+
+    if (url.pathname === "/PIXEL-FORGE/") {
+      url.pathname = "/PIXEL-FORGE/index.html";
+      return env.ASSETS.fetch(new Request(url, request));
+    }
+
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
