@@ -115,7 +115,7 @@ export default function Home() {
               </div>
               <dl className="metrics">
                 <div><dt>RENDER VAULT</dt><dd>{workCount} INDEXED</dd></div>
-                <div><dt>TOOLCHAIN</dt><dd>02 ONLINE</dd></div>
+                <div><dt>TOOLCHAIN</dt><dd>03 ONLINE</dd></div>
                 <div><dt>NETWORK</dt><dd>13TH ONI</dd></div>
               </dl>
               <p className="system-note">No feed. No algorithm. Just work, source files, and a few useful machines.</p>
@@ -123,13 +123,16 @@ export default function Home() {
           </aside>
 
           <section className="window applications-window" aria-labelledby="apps-title">
-            <div className="window-bar"><span id="apps-title">APPS://LAUNCHER</span><span>02 INSTALLED</span></div>
+            <div className="window-bar"><span id="apps-title">APPS://LAUNCHER</span><span>03 INSTALLED</span></div>
             <div className="app-list">
               <a className="app-tile app-tile--mottle" href="/MOTTLE/">
                 <span className="app-icon">M</span><span><b>MOTTLE</b><small>Image degradation &amp; mutation engine</small></span><em>OPEN ↗</em>
               </a>
               <a className="app-tile" href="/PIXEL-FORGE/">
                 <span className="app-icon">P</span><span><b>PIXEL FORGE 32</b><small>32×32 sprite &amp; animation workstation</small></span><em>OPEN ↗</em>
+              </a>
+              <a className="app-tile" href="/GLYPHSHIFT/">
+                <span className="app-icon">G</span><span><b>GLYPHSHIFT</b><small>Text, signal, and waveform mutation suite</small></span><em>OPEN ↗</em>
               </a>
             </div>
           </section>
@@ -198,13 +201,14 @@ export default function Home() {
           <button type="button" onClick={() => jump("wallpapers", "WALLPAPER INDEX // OPEN")}>▤ WALLPAPERS</button>
           <a href="/MOTTLE/">◌ MOTTLE</a>
           <a href="/PIXEL-FORGE/">▦ PIXEL FORGE 32</a>
+          <a href="/GLYPHSHIFT/">▧ GLYPHSHIFT</a>
           <button type="button" onClick={() => jump("signals", "RUDE BOI HOURS // TUNED")}>♫ RUDE BOI HOURS</button>
         </nav>
       )}
 
       <footer className="taskbar" aria-live="polite">
         <button className="start-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}>十三鬼 <span>START</span></button>
-        <div className="taskbar-apps"><button type="button" onClick={() => jump("home", "HOME TERMINAL // READY")}>HOME</button><a href="/MOTTLE/">MOTTLE</a><a href="/PIXEL-FORGE/">PIXEL FORGE</a></div>
+        <div className="taskbar-apps"><button type="button" onClick={() => jump("home", "HOME TERMINAL // READY")}>HOME</button><a href="/MOTTLE/">MOTTLE</a><a href="/PIXEL-FORGE/">PIXEL FORGE</a><a href="/GLYPHSHIFT/">GLYPHSHIFT</a></div>
         <span className="taskbar-status">{status}</span>
         <span className="taskbar-clock">LOCAL {clock}</span>
         <span className="taskbar-user"><img src="/brand/oni-emblem.png" alt="" /> 513GEL</span>

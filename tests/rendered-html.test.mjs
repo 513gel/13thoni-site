@@ -66,6 +66,19 @@ test("normalizes /PIXEL-FORGE to its canonical trailing-slash URL", async () => 
   assert.equal(response.headers.get("location"), "http://localhost/PIXEL-FORGE/");
 });
 
+test("serves Glyphshift from the terminal toolchain", async () => {
+  const response = await request("/GLYPHSHIFT/");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /GLYPHSHIFT/i);
+});
+
+test("normalizes /GLYPHSHIFT to its canonical trailing-slash URL", async () => {
+  const response = await request("/GLYPHSHIFT");
+  assert.equal(response.status, 308);
+  assert.equal(response.headers.get("location"), "http://localhost/GLYPHSHIFT/");
+});
+
 test("ships the Mottle source as a public deployment asset", async () => {
   const html = await readFile(new URL("../public/MOTTLE/index.html", import.meta.url), "utf8");
   assert.match(html, /<title>MOTTLE<\/title>/i);

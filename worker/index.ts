@@ -54,6 +54,16 @@ const worker = {
       return env.ASSETS.fetch(new Request(url, request));
     }
 
+    if (url.pathname === "/GLYPHSHIFT") {
+      url.pathname = "/GLYPHSHIFT/";
+      return Response.redirect(url.toString(), 308);
+    }
+
+    if (url.pathname === "/GLYPHSHIFT/") {
+      url.pathname = "/GLYPHSHIFT/index.html";
+      return env.ASSETS.fetch(new Request(url, request));
+    }
+
     if (url.pathname === "/_vinext/image") {
       const allowedWidths = [...DEFAULT_DEVICE_SIZES, ...DEFAULT_IMAGE_SIZES];
       return handleImageOptimization(request, {
