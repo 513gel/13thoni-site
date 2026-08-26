@@ -1,15 +1,13 @@
-:root{--os-bg:#090909;--os-panel:#101010;--os-line:#303030;--os-ink:#f2f2ef;--os-muted:#9a9a94;--os-red:#e60012}
-.has-13os-taskbar{padding-bottom:42px!important}
-#os-taskbar{position:fixed;z-index:2147483000;right:0;bottom:0;left:0;display:grid;grid-template-columns:auto auto auto 1fr auto auto;align-items:center;min-height:42px;border-top:1px solid #7a7a75;background:rgba(9,9,9,.96);box-shadow:0 -8px 28px rgba(0,0,0,.42);backdrop-filter:blur(12px);color:var(--os-ink);font-family:"SF Mono","Cascadia Code","JetBrains Mono",Consolas,"Courier New",monospace;font-size:10px;letter-spacing:.09em}
+:root{--os-line:#303030;--os-ink:#f2f2ef;--os-muted:#9a9a94;--os-red:#e60012}
+.has-13os-taskbar{padding-bottom:42px!important}.has-13os-taskbar .taskbar{display:none!important}
+#os-taskbar{position:fixed;z-index:2147483000;right:0;bottom:0;left:0;display:grid;grid-template-columns:auto auto 1fr auto auto;align-items:center;min-height:42px;border-top:1px solid #7a7a75;background:rgba(9,9,9,.96);box-shadow:0 -8px 28px rgba(0,0,0,.42);backdrop-filter:blur(12px);color:var(--os-ink);font-family:"SF Mono","Cascadia Code","JetBrains Mono",Consolas,"Courier New",monospace;font-size:10px;letter-spacing:.09em}
 #os-taskbar *{box-sizing:border-box;font:inherit}
 #os-taskbar button,#os-taskbar a{display:flex;align-items:center;align-self:stretch;border:0;border-right:1px solid var(--os-line);padding:0 12px;background:transparent;color:#d3d3ce;text-decoration:none;cursor:pointer;white-space:nowrap}
 #os-taskbar button:hover,#os-taskbar button:focus-visible,#os-taskbar a:hover,#os-taskbar a:focus-visible,#os-taskbar .is-active{background:rgba(230,0,18,.17);color:#fff;outline:0}
 #os-taskbar .os-start{background:var(--os-red);color:#fff;font-weight:800;font-size:11px}
 #os-taskbar .os-start span{margin-left:7px;font-size:8px}
-#os-taskbar .os-apps{display:flex;align-self:stretch}
+#os-taskbar .os-apps{display:flex;align-self:stretch;min-width:0;overflow-x:auto}
 #os-taskbar .os-apps a[aria-current="page"]{box-shadow:inset 0 -2px 0 var(--os-red);color:#fff}
-#os-taskbar .os-media{color:#eee}
-#os-taskbar .os-media span{margin-left:7px;color:#ff6973;font-size:8px}
 #os-taskbar .os-status{overflow:hidden;padding:0 14px;color:var(--os-muted);text-overflow:ellipsis;white-space:nowrap}
 #os-taskbar .os-clock,#os-taskbar .os-access{align-self:stretch;display:flex;align-items:center;border-left:1px solid var(--os-line);padding:0 12px;white-space:nowrap}
 #os-taskbar .os-access{gap:7px;color:#ddd}
@@ -19,10 +17,4 @@
 #os-start-menu strong{padding:7px 9px 11px;color:#ff5964;font-size:9px;letter-spacing:.16em}
 #os-start-menu a{padding:10px 9px;color:#eee;text-decoration:none}
 #os-start-menu a:hover,#os-start-menu a:focus-visible{background:var(--os-red);outline:0}
-#os-media-dock{position:fixed;z-index:2147482998;right:18px;bottom:42px;width:min(520px,calc(100vw - 36px));overflow:hidden;border:1px solid #777;border-bottom:0;background:#090909;box-shadow:0 -12px 40px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(8px);pointer-events:none;transition:opacity 120ms linear,transform 120ms ease}
-#os-media-dock.is-open{opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
-#os-media-dock header{display:flex;align-items:center;justify-content:space-between;min-height:34px;padding:0 11px;border-bottom:1px solid var(--os-line);color:#c9c9c2;font:9px "SF Mono","Cascadia Code","JetBrains Mono",Consolas,"Courier New",monospace;letter-spacing:.12em}
-#os-media-dock button{border:0;background:transparent;color:#ff5964;font:inherit;cursor:pointer}
-#os-media-dock button:hover,#os-media-dock button:focus-visible{color:#fff;outline:0}
-#os-media-dock iframe{display:block;width:100%;height:152px;border:0;background:#111}
-@media(max-width:680px){.has-13os-taskbar{padding-bottom:48px!important}#os-taskbar{grid-template-columns:auto auto 1fr auto;min-height:48px;font-size:9px}#os-taskbar .os-start span,#os-taskbar .os-apps,#os-taskbar .os-clock{display:none}#os-taskbar .os-media{padding:0 9px}#os-taskbar .os-media span{display:none}#os-taskbar .os-status{padding:0 10px;font-size:8px}#os-taskbar .os-access{padding:0 9px;font-size:0}#os-taskbar .os-access img{width:26px;height:26px;margin:0}#os-start-menu{bottom:48px;width:min(330px,100%)}#os-media-dock{right:0;bottom:48px;width:100%}}
+@media(max-width:680px){.has-13os-taskbar{padding-bottom:48px!important}#os-taskbar{grid-template-columns:auto 1fr auto;min-height:48px;font-size:9px}#os-taskbar .os-start span,#os-taskbar .os-apps,#os-taskbar .os-clock{display:none}#os-taskbar .os-status{padding:0 10px;font-size:8px}#os-taskbar .os-access{padding:0 9px;font-size:0}#os-taskbar .os-access img{width:26px;height:26px;margin:0}#os-start-menu{bottom:48px;width:min(330px,100%)}}

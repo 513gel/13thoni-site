@@ -33,8 +33,12 @@ test("renders the 13th Oni personal terminal with its local applications", async
   assert.match(html, /13th Oni — Personal Terminal/i);
   assert.match(html, /href="\/MOTTLE\/"/i);
   assert.match(html, /href="\/PIXEL-FORGE\/"/i);
+  assert.match(html, /href="\/FORMATKILLER\/"/i);
+  assert.match(html, /href="\/RHYTHMGRID\/"/i);
+  assert.match(html, /href="\/BASSLIQUID\/"/i);
+  assert.match(html, /href="\/LOOPFORGE\/"/i);
   assert.match(html, /RENDER VAULT/);
-  assert.match(html, /RUDE BOI HOURS/);
+  assert.doesNotMatch(html, /open\.spotify\.com/i);
 });
 
 test("serves the bundled Mottle application at /MOTTLE/", async () => {
@@ -83,6 +87,27 @@ test("normalizes /GLYPHSHIFT to its canonical trailing-slash URL", async () => {
   assert.equal(response.status, 308);
   assert.equal(response.headers.get("location"), "http://localhost/GLYPHSHIFT/");
 });
+
+for (const { slug, title } of [
+  { slug: "FORMATKILLER", title: "FORMATKILLER" },
+  { slug: "RHYTHMGRID", title: "RHYTHMGRID" },
+  { slug: "BASSLIQUID", title: "BASSLIQUID" },
+  { slug: "LOOPFORGE", title: "LOOPFORGE" },
+]) {
+  test("serves "+slug+" from its sealed release bundle", async () => {
+    const response = await request("/"+slug+"/");
+    assert.equal(response.status, 200);
+    const html = await response.text();
+    assert.match(html, new RegExp(title, "i"));
+    assert.match(html, /13os-taskbar\.js/i);
+  });
+
+  test("normalizes /"+slug+" to its canonical trailing-slash URL", async () => {
+    const response = await request("/"+slug);
+    assert.equal(response.status, 308);
+    assert.equal(response.headers.get("location"), "http://localhost/"+slug+"/");
+  });
+}
 
 test("ships the Mottle source as a public deployment asset", async () => {
   const html = await readFile(new URL("../public/MOTTLE/index.html", import.meta.url), "utf8");
