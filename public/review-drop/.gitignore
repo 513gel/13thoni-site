@@ -1,2 +1,8 @@
 /media/*
 !/media/.gitkeep
+!/media/*.mp4
+!/media/*.webm
+!/media/*.png
+!/media/*.jpg
+!/media/*.jpeg
+!/media/*.webp
