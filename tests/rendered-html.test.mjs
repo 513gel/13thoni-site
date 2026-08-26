@@ -38,6 +38,15 @@ test("renders the 13th Oni personal terminal with its local applications", async
   assert.doesNotMatch(html, /open\.spotify\.com/i);
 });
 
+test("serves the private review drop only at its direct unlisted route", async () => {
+  const response = await request("/r/5c881e9e710d4aa0b92d");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /REVIEW DROP/i);
+  assert.match(html, /noindex, nofollow/i);
+  assert.doesNotMatch(html, /MOTTLE|PIXEL FORGE|GLYPHSHIFT/i);
+});
+
 test("serves the bundled Mottle application at /MOTTLE/", async () => {
   const response = await request("/MOTTLE/");
   assert.equal(response.status, 200);

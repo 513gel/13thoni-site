@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /r/5c881e9e710d4aa0b92d/
 
 Sitemap: https://13thoni.com/sitemap.xml

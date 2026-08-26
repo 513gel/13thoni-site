@@ -1,0 +1,5 @@
+param([string]$MediaDirectory=(Join-Path $PSScriptRoot "..\public\review-drop\media"),[string]$ManifestPath=(Join-Path $PSScriptRoot "..\public\review-drop\manifest.json"))
+$allowed=@(".png",".jpg",".jpeg",".webp",".gif",".mp4",".webm",".mov");$video=@(".mp4",".webm",".mov");$mediaRoot=[System.IO.Path]::GetFullPath($MediaDirectory);$manifest=[System.IO.Path]::GetFullPath($ManifestPath)
+if(-not(Test-Path -LiteralPath $mediaRoot)){New-Item -ItemType Directory -Force -Path $mediaRoot|Out-Null}
+$items=@(Get-ChildItem -LiteralPath $mediaRoot -File|Where-Object{$allowed -contains $_.Extension.ToLowerInvariant()}|Sort-Object LastWriteTimeUtc -Descending|ForEach-Object{[PSCustomObject]@{src="/review-drop/media/$([uri]::EscapeDataString($_.Name))";title=($_.BaseName -replace "[_-]+"," ").ToUpperInvariant();kind=if($video -contains $_.Extension.ToLowerInvariant()){"video"}else{"image"};modifiedAt=$_.LastWriteTimeUtc.ToString("o");bytes=$_.Length}})
+[PSCustomObject]@{updatedAt=[DateTime]::UtcNow.ToString("o");items=$items}|ConvertTo-Json -Depth 4|Set-Content -LiteralPath $manifest -Encoding utf8
