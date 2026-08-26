@@ -33,10 +33,7 @@ test("renders the 13th Oni personal terminal with its local applications", async
   assert.match(html, /13th Oni — Personal Terminal/i);
   assert.match(html, /href="\/MOTTLE\/"/i);
   assert.match(html, /href="\/PIXEL-FORGE\/"/i);
-  assert.match(html, /href="\/FORMATKILLER\/"/i);
-  assert.match(html, /href="\/RHYTHMGRID\/"/i);
-  assert.match(html, /href="\/BASSLIQUID\/"/i);
-  assert.match(html, /href="\/LOOPFORGE\/"/i);
+  assert.doesNotMatch(html, /href="\/(FORMATKILLER|RHYTHMGRID|BASSLIQUID|LOOPFORGE)\//i);
   assert.match(html, /RENDER VAULT/);
   assert.doesNotMatch(html, /open\.spotify\.com/i);
 });

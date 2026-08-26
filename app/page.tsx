@@ -124,7 +124,7 @@ export default function Home() {
           </aside>
 
           <section className="window applications-window" aria-labelledby="apps-title">
-            <div className="window-bar"><span id="apps-title">APPS://LAUNCHER</span><span>07 INSTALLED</span></div>
+            <div className="window-bar"><span id="apps-title">APPS://LAUNCHER</span><span>03 INSTALLED</span></div>
             <div className="app-list">
               <a className="app-tile app-tile--mottle" href="/MOTTLE/">
                 <span className="app-icon">M</span><span><b>MOTTLE</b><small>Image degradation &amp; mutation engine</small></span><em>OPEN ↗</em>
@@ -134,18 +134,6 @@ export default function Home() {
               </a>
               <a className="app-tile" href="/GLYPHSHIFT/">
                 <span className="app-icon">G</span><span><b>GLYPHSHIFT</b><small>Text, signal, and waveform mutation suite</small></span><em>OPEN ↗</em>
-              </a>
-              <a className="app-tile" href="/FORMATKILLER/">
-                <span className="app-icon">FK</span><span><b>FORMATKILLER</b><small>Fictional interface compositor</small></span><em>OPEN ↗</em>
-              </a>
-              <a className="app-tile" href="/RHYTHMGRID/">
-                <span className="app-icon">RG</span><span><b>RHYTHMGRID</b><small>Beat-synced reel grid generator</small></span><em>OPEN ↗</em>
-              </a>
-              <a className="app-tile" href="/BASSLIQUID/">
-                <span className="app-icon">BL</span><span><b>BASSLIQUID</b><small>Audio-reactive liquid instrument</small></span><em>OPEN ↗</em>
-              </a>
-              <a className="app-tile" href="/LOOPFORGE/">
-                <span className="app-icon">LF</span><span><b>LOOPFORGE</b><small>Deterministic seamless-loop generator</small></span><em>OPEN ↗</em>
               </a>
             </div>
           </section>
@@ -203,16 +191,12 @@ export default function Home() {
           <a href="/MOTTLE/">◌ MOTTLE</a>
           <a href="/PIXEL-FORGE/">▦ PIXEL FORGE</a>
           <a href="/GLYPHSHIFT/">▧ GLYPHSHIFT</a>
-          <a href="/FORMATKILLER/">FK FORMATKILLER</a>
-          <a href="/RHYTHMGRID/">RG RHYTHMGRID</a>
-          <a href="/BASSLIQUID/">BL BASSLIQUID</a>
-          <a href="/LOOPFORGE/">LF LOOPFORGE</a>
         </nav>
       )}
 
       <footer className="taskbar" aria-live="polite">
         <button className="start-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}>十三鬼 <span>START</span></button>
-        <div className="taskbar-apps"><button type="button" onClick={() => jump("home", "HOME TERMINAL // READY")}>HOME</button><a href="/MOTTLE/">MOTTLE</a><a href="/PIXEL-FORGE/">PIXEL FORGE</a><a href="/GLYPHSHIFT/">GLYPHSHIFT</a><a href="/FORMATKILLER/">FORMATKILLER</a><a href="/RHYTHMGRID/">RHYTHMGRID</a><a href="/BASSLIQUID/">BASSLIQUID</a><a href="/LOOPFORGE/">LOOPFORGE</a></div>
+        <div className="taskbar-apps"><button type="button" onClick={() => jump("home", "HOME TERMINAL // READY")}>HOME</button><a href="/MOTTLE/">MOTTLE</a><a href="/PIXEL-FORGE/">PIXEL FORGE</a><a href="/GLYPHSHIFT/">GLYPHSHIFT</a></div>
         <span className="taskbar-status">{status}</span>
         <span className="taskbar-clock">LOCAL {clock}</span>
         <span className="taskbar-user"><img src="/brand/oni-emblem.png" alt="" /> GUEST ACCESS</span>
