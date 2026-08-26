@@ -10,7 +10,6 @@
     <link rel="manifest" href="site.webmanifest" />
     <title>GLYPHSHIFT — ASCII MOTION TOOL</title>
     <link rel="stylesheet" href="styles.css" />
-    <link rel="stylesheet" href="/13os-taskbar.css" />
   </head>
   <body>
     <header class="topbar">
@@ -134,7 +133,7 @@
             <label>LIBRARY
               <select id="charset-preset"><option value="dense" selected>DENSE ASCII</option><option value="english">ENGLISH A–Z</option><option value="binary">BINARY / TERMINAL</option><option value="blocks">BLOCKS + SHADES</option><option value="katakana">JAPANESE KATAKANA / TERMINAL</option><option value="symbols">SYMBOLS / RUNES</option><option value="custom">CUSTOM RAMP</option></select>
             </label>
-            <label>CONTENT MODE
+            <label>CONTENT MODE <span class="field-note">PASTE TEXT TO AUTO-ENABLE</span>
               <select id="glyph-source"><option value="ramp" selected>BRIGHTNESS RAMP</option><option value="text">TEXT FOUNDATION</option></select>
             </label>
           </div>
@@ -142,8 +141,8 @@
             <input id="charset" type="text" value=" .,:;irsXA253hMHGS#9B&@" spellcheck="false" />
           </label>
           <div class="two-col">
-            <label>TEXT LAYOUT
-              <select id="text-layout"><option value="flow" selected>LEFT → RIGHT FLOW</option><option value="reverse">RIGHT → LEFT FLOW</option><option value="lines">PRESERVE LINES</option><option value="vertical">VERTICAL FLOW</option><option value="spiral">SPIRAL FLOW</option></select>
+            <label>TEXT LAYOUT <span class="field-note">FLOW STARTS AT TOP</span>
+              <select id="text-layout"><option value="flow" selected>TOP → BOTTOM READING FLOW</option><option value="reverse">RIGHT → LEFT FLOW</option><option value="lines">PRESERVE LINES</option><option value="vertical">VERTICAL FLOW</option><option value="spiral">SPIRAL FLOW</option></select>
             </label>
             <label>TEXT REPEAT <output id="text-scale-out">1</output>
               <input id="text-scale" type="range" min="1" max="8" step="1" value="1" />
@@ -333,8 +332,6 @@
     </main>
 
     <footer><span>WHITE SIGNAL / BLACK VOID</span><span id="transport-status">READY</span><span>DROP → DIRECT → DISTORT → EXPORT</span></footer>
-    <div id="os-taskbar"></div>
     <script src="app.js"></script>
-    <script src="/13os-taskbar.js"></script>
   </body>
 </html>
