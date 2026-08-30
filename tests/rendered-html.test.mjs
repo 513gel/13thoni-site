@@ -154,4 +154,7 @@ test("ships the Mottle source as a public deployment asset", async () => {
   assert.match(html, /page:7, sel:"#catModeRow,#catModeToggle"/);
   assert.match(html, /function obReveal\(el,done\)/);
   assert.match(html, /page\.scrollTop=Math\.max\(0,centered\)/);
+  assert.match(html, /<option value="paint">Painted selection<\/option>/);
+  assert.match(html, /function paintMaskAlpha\(/);
+  assert.match(html, /Draw on preview/);
 });

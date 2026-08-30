@@ -71,6 +71,9 @@
     padding:8px;cursor:pointer;position:relative;touch-action:none}
   canvas#out{width:auto;height:auto;max-width:100%;max-height:34vh;
     image-rendering:pixelated;image-rendering:crisp-edges;display:block}
+  #maskOverlay{position:absolute;display:none;z-index:6;pointer-events:none;
+    touch-action:none;cursor:crosshair}
+  #maskOverlay.editing{display:block;pointer-events:auto}
   @media(min-width:880px){ canvas#out{max-height:52vh} }
   .drop-hint{position:absolute;left:0;right:0;bottom:6px;display:flex;justify-content:center}
   .drop-hint button{color:var(--fg);font-size:9px;letter-spacing:.14em;background:var(--bg);
@@ -1087,6 +1090,7 @@
     </div>
     <div class="canvaswrap" id="canvaswrap">
       <canvas id="out" width="8" height="8"></canvas>
+      <canvas id="maskOverlay" aria-label="Mask drawing canvas"></canvas>
       <div id="cropbox"></div>
       <div class="drop-hint" id="hint"><button id="loadBtn" class="primary">Load photo, GIF, or video</button></div>
     </div>
@@ -1466,12 +1470,13 @@
           <option value="bandh">Horizontal band</option>
           <option value="bandv">Vertical band</option>
           <option value="edges">Edge frame</option>
+          <option value="paint">Painted selection</option>
         </select>
         <button id="maskAdd" style="flex:0 0 auto">+ Add</button>
       </div>
       <div id="maskList"></div>
       <label class="toggle"><input type="checkbox" id="maskInvert"> Invert combined result — process outside instead</label>
-      <div class="note">Stack multiple mask layers — they union together. The full pipeline (FX, color, dither) applies inside the combined mask; outside stays clean. Each layer can be inverted individually too.</div>
+      <div class="note">Stack multiple mask layers — they union together. Add a Painted selection for brush or lasso drawing directly on the preview. The full pipeline applies inside the combined mask; outside stays clean.</div>
     </div>
   </section>
 
@@ -2907,7 +2912,51 @@ const FX = {
 
 /* ================= mask ================= */
 function smoothstep(t){ t=clamp(t,0,1); return t*t*(3-2*t); }
+const paintMaskCache=new WeakMap();
+function paintSpec(m){
+  if(!m.paint||!Array.isArray(m.paint.paths))m.paint={paths:[]};
+  return m.paint;
+}
+function invalidatePaintMask(m){
+  m.paintVersion=(m.paintVersion||0)+1;
+  paintMaskCache.delete(m);
+}
+function buildPaintMask(m,w,h){
+  const cached=paintMaskCache.get(m);
+  if(cached&&cached.w===w&&cached.h===h&&cached.version===(m.paintVersion||0))return cached.data;
+  const canvas=document.createElement("canvas");canvas.width=w;canvas.height=h;
+  const ctx=canvas.getContext("2d");ctx.clearRect(0,0,w,h);
+  const scale=Math.min(w,h)/100;
+  for(const path of paintSpec(m).paths){
+    const pts=path.points||[];
+    if(!pts.length)continue;
+    ctx.save();ctx.globalCompositeOperation=path.erase?"destination-out":"source-over";
+    ctx.fillStyle="#fff";ctx.strokeStyle="#fff";
+    if(path.type==="lasso"){
+      if(pts.length>=3){ctx.beginPath();ctx.moveTo(pts[0][0]*w/100,pts[0][1]*h/100);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0]*w/100,pts[i][1]*h/100);ctx.closePath();ctx.fill();}
+    }else{
+      const size=Math.max(1,(path.size||12)*scale);
+      ctx.lineCap="round";ctx.lineJoin="round";ctx.lineWidth=size;
+      ctx.beginPath();ctx.moveTo(pts[0][0]*w/100,pts[0][1]*h/100);
+      if(pts.length===1)ctx.lineTo(pts[0][0]*w/100+.01,pts[0][1]*h/100+.01);
+      else for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0]*w/100,pts[i][1]*h/100);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+  const data=ctx.getImageData(0,0,w,h).data;
+  paintMaskCache.set(m,{w,h,version:m.paintVersion||0,data});
+  return data;
+}
+function paintMaskAlpha(x,y,w,h,m){
+  const data=buildPaintMask(m,w,h),i=(Math.min(h-1,Math.max(0,y|0))*w+Math.min(w-1,Math.max(0,x|0)))*4;
+  return data[i]/255;
+}
 function maskAlpha(x,y,w,h,m){
+  if(m.mode==="paint"){
+    const a=paintMaskAlpha(x,y,w,h,m);
+    return m.invert?1-a:a;
+  }
   const cx=w*m.x/100, cy=h*m.y/100;
   const rawDx=x-cx,rawDy=y-cy,ang=-(m.rotation||0)*Math.PI/180,ca=Math.cos(ang),sa=Math.sin(ang);
   const dx=rawDx*ca-rawDy*sa,dy=rawDx*sa+rawDy*ca;
@@ -2963,7 +3012,7 @@ function applyMask(d,raw,w,h){
 
 const paramSlug=s=>String(s||"value").toLowerCase().replace(/[^a-z0-9]+(.)/g,(_,c)=>c?c.toUpperCase():"");
 function normalizeMask(mask){
-  const defaults={enabled:false,mode:"circle",x:50,y:50,size:50,size2:50,rotation:0,feather:25,opacity:100,invert:false,falloff:"smooth",edgeBehavior:"clamp",moveWithMotion:true,preview:false,combine:"replace"};
+  const defaults={enabled:false,mode:"circle",x:50,y:50,size:50,size2:50,rotation:0,feather:25,opacity:100,invert:false,falloff:"smooth",edgeBehavior:"clamp",moveWithMotion:true,preview:false,combine:"replace",paint:{paths:[]},paintTool:"brush",paintBrush:12,paintErase:false,paintVersion:0};
   return Object.assign({},defaults,mask||{},mask?{}:{enabled:false});
 }
 function normalizeOperation(fx){
@@ -3825,6 +3874,7 @@ function render(frame=0){
   if(splitOn&&S.img) drawSplit(frame);
   if(typeof applyZoom==="function"&&zoomF>0) applyZoom();
   $("dims").textContent=`${out.width}×${out.height}`;
+  if(typeof renderMaskOverlay==="function")renderMaskOverlay();
 }
 let raf=0;
 function scheduleRender(){ if(previewing) return;
@@ -4742,7 +4792,68 @@ const MASK_DIALS=[
   ["feather","Feather",0,100],
 ];
 const MASK_NAMES={circle:"Circle",ellipse:"Ellipse",box:"Rounded box",
-  bandh:"H band",bandv:"V band",edges:"Edge frame"};
+  bandh:"H band",bandv:"V band",edges:"Edge frame",paint:"Painted selection"};
+let activePaintMask=-1,paintSession=null;
+const maskOverlay=$("maskOverlay");
+function activePaintLayer(){return S.masks[activePaintMask]?.mode==="paint"?S.masks[activePaintMask]:null;}
+function drawPaintPath(ctx,path,w,h,live=false){
+  const pts=path?.points||[];if(!pts.length)return;
+  ctx.save();ctx.lineJoin="round";ctx.lineCap="round";
+  const color=path.erase?"#e60012":"#f5f5f2";ctx.strokeStyle=color;ctx.fillStyle=path.erase?"rgba(230,0,18,.12)":"rgba(245,245,242,.10)";
+  if(path.type==="lasso"){
+    ctx.setLineDash(live?[7,5]:[5,4]);ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(pts[0][0]*w/100,pts[0][1]*h/100);for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0]*w/100,pts[i][1]*h/100);if(!live&&pts.length>2){ctx.closePath();ctx.fill();}ctx.stroke();
+  }else{
+    ctx.lineWidth=Math.max(2,(path.size||12)*Math.min(w,h)/100);ctx.globalAlpha=live?.9:.65;ctx.beginPath();ctx.moveTo(pts[0][0]*w/100,pts[0][1]*h/100);if(pts.length===1)ctx.lineTo(pts[0][0]*w/100+.01,pts[0][1]*h/100+.01);else for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i][0]*w/100,pts[i][1]*h/100);ctx.stroke();
+  }
+  ctx.restore();
+}
+function renderMaskOverlay(){
+  const m=activePaintLayer();
+  if(!m||!S.img||cropMode||splitOn){maskOverlay.classList.remove("editing");return;}
+  const rect=out.getBoundingClientRect(),host=$("canvaswrap").getBoundingClientRect();
+  if(rect.width<2||rect.height<2){maskOverlay.classList.remove("editing");return;}
+  const dpr=Math.min(2,window.devicePixelRatio||1),pw=Math.round(rect.width*dpr),ph=Math.round(rect.height*dpr);
+  if(maskOverlay.width!==pw)maskOverlay.width=pw;if(maskOverlay.height!==ph)maskOverlay.height=ph;
+  maskOverlay.style.left=(rect.left-host.left+$("canvaswrap").scrollLeft)+"px";
+  maskOverlay.style.top=(rect.top-host.top+$("canvaswrap").scrollTop)+"px";
+  maskOverlay.style.width=rect.width+"px";maskOverlay.style.height=rect.height+"px";
+  const ctx=maskOverlay.getContext("2d");ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);
+  for(const path of paintSpec(m).paths)drawPaintPath(ctx,path,rect.width,rect.height);
+  if(paintSession?.mask===m)drawPaintPath(ctx,paintSession.path,rect.width,rect.height,true);
+  maskOverlay.classList.add("editing");
+}
+function paintPoint(e){
+  const r=maskOverlay.getBoundingClientRect();
+  return [clamp((e.clientX-r.left)/r.width*100,0,100),clamp((e.clientY-r.top)/r.height*100,0,100)];
+}
+function finishPaintSession(commit=true){
+  const session=paintSession;if(!session)return;
+  paintSession=null;
+  if(commit&&session.path.points.length>=(session.path.type==="lasso"?3:1)){
+    if(!session.pushed)pushUndo();
+    const m=session.mask;paintSpec(m).paths.push(session.path);invalidatePaintMask(m);scheduleRender();autosaveProject();
+  }
+  renderMaskOverlay();
+}
+maskOverlay.addEventListener("pointerdown",e=>{
+  const m=activePaintLayer();if(!m||!S.img||cropMode||splitOn)return;
+  e.preventDefault();e.stopPropagation();
+  const erase=e.button===2?!m.paintErase:!!m.paintErase;
+  const path={type:m.paintTool==="lasso"?"lasso":"brush",erase,size:clamp(+m.paintBrush||12,2,60),points:[paintPoint(e)]};
+  if(path.type==="brush")pushUndo();
+  paintSession={mask:m,path,pointerId:e.pointerId,pushed:path.type==="brush"};maskOverlay.setPointerCapture(e.pointerId);renderMaskOverlay();
+});
+maskOverlay.addEventListener("pointermove",e=>{
+  if(!paintSession||e.pointerId!==paintSession.pointerId)return;
+  e.preventDefault();const pts=paintSession.path.points,p=paintPoint(e),last=pts[pts.length-1];
+  if(!last||Math.abs(p[0]-last[0])+Math.abs(p[1]-last[1])>.18)pts.push(p);
+  renderMaskOverlay();
+});
+["pointerup","pointercancel"].forEach(ev=>maskOverlay.addEventListener(ev,e=>{
+  if(!paintSession||e.pointerId!==paintSession.pointerId)return;
+  finishPaintSession(ev==="pointerup");
+}));
+maskOverlay.addEventListener("contextmenu",e=>e.preventDefault());
 function renderMaskList(){
   const list=$("maskList"); list.innerHTML="";
   S.masks.forEach((m,i)=>{
@@ -4755,8 +4866,22 @@ function renderMaskList(){
     inv.addEventListener("click",()=>{ pushUndo(); m.invert=!m.invert; renderMaskList(); scheduleRender(); });
     const rm=document.createElement("button"); rm.textContent="×";
     rm.title="Remove mask layer";
-    rm.addEventListener("click",()=>{ pushUndo(); S.masks.splice(i,1); renderMaskList(); scheduleRender(); });
+    rm.addEventListener("click",()=>{ pushUndo(); S.masks.splice(i,1); if(activePaintMask===i)activePaintMask=-1;else if(activePaintMask>i)activePaintMask--; renderMaskList(); renderMaskOverlay(); scheduleRender(); });
     top.append(nm,inv,rm); div.appendChild(top);
+    if(m.mode==="paint"){
+      paintSpec(m);
+      const tools=document.createElement("div");tools.className="btnrow";
+      const edit=document.createElement("button");edit.textContent=activePaintMask===i?"Done drawing":"Draw on preview";edit.classList.toggle("on",activePaintMask===i);edit.title="Draw this mask directly on the preview";
+      edit.addEventListener("click",()=>{finishPaintSession();activePaintMask=activePaintMask===i?-1:i;renderMaskList();renderMaskOverlay();});
+      const brush=document.createElement("button");brush.textContent="Brush";brush.classList.toggle("on",m.paintTool!=="lasso");brush.addEventListener("click",()=>{m.paintTool="brush";renderMaskList();});
+      const lasso=document.createElement("button");lasso.textContent="Lasso";lasso.classList.toggle("on",m.paintTool==="lasso");lasso.addEventListener("click",()=>{m.paintTool="lasso";renderMaskList();});
+      const erase=document.createElement("button");erase.textContent="Erase";erase.classList.toggle("on",!!m.paintErase);erase.addEventListener("click",()=>{m.paintErase=!m.paintErase;renderMaskList();});
+      const clear=document.createElement("button");clear.textContent="Clear";clear.title="Clear all painted marks in this mask";clear.addEventListener("click",()=>{pushUndo();m.paint={paths:[]};invalidatePaintMask(m);renderMaskList();scheduleRender();autosaveProject();});
+      tools.append(edit,brush,lasso,erase,clear);div.appendChild(tools);
+      const row=document.createElement("div");row.className="prow";const label=document.createElement("label");label.textContent="Brush size";const range=document.createElement("input");range.type="range";range.min=2;range.max=60;range.value=m.paintBrush||12;range.setAttribute("aria-label","Mask brush size");range.addEventListener("input",()=>{m.paintBrush=+range.value;});row.append(label,range);div.appendChild(row);
+      const note=document.createElement("div");note.className="note";note.textContent="Draw closed areas with Lasso, or paint freehand. Erase removes parts of the same selection. Right-click temporarily erases.";div.appendChild(note);
+      list.appendChild(div);return;
+    }
     const useS2 = m.mode==="ellipse"||m.mode==="box";
     const useXY = m.mode!=="edges";
     for(const [key,label,mn,mx] of MASK_DIALS){
@@ -4782,8 +4907,9 @@ function renderMaskList(){
 }
 $("maskAdd").addEventListener("click",()=>{
   pushUndo();
-  S.masks.push({mode:$("maskSel").value,x:50,y:50,size:50,size2:35,feather:30,invert:false});
-  renderMaskList(); scheduleRender();
+  const mode=$("maskSel").value;
+  S.masks.push(mode==="paint"?{mode,paint:{paths:[]},paintTool:"brush",paintBrush:12,paintErase:false,invert:false}:{mode,x:50,y:50,size:50,size2:35,feather:30,invert:false});
+  renderMaskList(); scheduleRender(); autosaveProject();
 });
 
 $("fxadd").addEventListener("click",()=>{
@@ -4803,7 +4929,7 @@ function makeSnap(){
   const settings={};
   for(const k of snapKeys) settings[k]=S[k];
   settings.fpsTouched=S.fpsTouched;
-  return {settings, fx:JSON.parse(JSON.stringify(S.fx)), masks:S.masks.map(m=>({...m})),
+  return {settings, fx:JSON.parse(JSON.stringify(S.fx)), masks:JSON.parse(JSON.stringify(S.masks)),
     temporalModules:JSON.parse(JSON.stringify(S.temporalModules||[])), reusableMasks:JSON.parse(JSON.stringify(S.reusableMasks||[])),
     img:S.img, frames:S.frames, delays:S.frameDelays,
     origImg:S.origImg, origFrames:S.origFrames, origDelays:S.origDelays,
