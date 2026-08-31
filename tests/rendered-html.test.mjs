@@ -157,4 +157,6 @@ test("ships the Mottle source as a public deployment asset", async () => {
   assert.match(html, /<option value="paint">Painted selection<\/option>/);
   assert.match(html, /function paintMaskAlpha\(/);
   assert.match(html, /Draw on preview/);
+  assert.match(html, /appendPaintMaskControls\(details,mask,"temporal"/);
+  assert.match(html, /appendPaintMaskControls\(card\.querySelector\('details\.op-section:last-of-type'\),mask,"effect"/);
 });
