@@ -10,11 +10,12 @@ async function request(pathname, init = {}) {
   return worker.fetch(
     new Request(`http://localhost${pathname}`, { headers: { accept: "text/html", ...(init.headers ?? {}) }, ...init }),
     {
-      REVIEW_PIN: "3991",
+      REVIEW_PIN: "2468",
       REVIEW_ACCESS_TOKEN: "test-review-access-token",
       ASSETS: {
         fetch: async (assetRequest) => {
-          const path = new URL(assetRequest.url).pathname.replace(/^\//, "");
+          const rawPath = new URL(assetRequest.url).pathname.replace(/^\//, "");
+          const path = rawPath.endsWith("/") ? `${rawPath}index.html` : rawPath;
           try {
             const body = await readFile(new URL(`../dist/client/${path}`, import.meta.url));
             return new Response(body, { headers: { "content-type": "text/html; charset=utf-8" } });
@@ -65,7 +66,7 @@ test("requires the review PIN before serving the manifest or review media", asyn
   const rejected = await request("/api/review-unlock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin: "0000" }) });
   assert.equal(rejected.status, 401);
 
-  const unlocked = await request("/api/review-unlock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin: "3991" }) });
+  const unlocked = await request("/api/review-unlock", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ pin: "2468" }) });
   assert.equal(unlocked.status, 204);
   const cookie = unlocked.headers.get("set-cookie");
   assert.match(cookie ?? "", /HttpOnly; Secure; SameSite=Lax/i);
@@ -102,6 +103,13 @@ test("serves Pixel Forge as a local 13OS application", async () => {
   assert.match(html, /class="workspace"/i);
   assert.match(html, /class="inspector"/i);
   assert.match(html, /CONTROL SURFACE/i);
+  assert.match(html, /175\s*×\s*175\s*\/\/\s*DETAIL\s*350/i);
+  assert.match(html, /70\s*×\s*70\s*\/\/\s*CHUNKY\s*350/i);
+  assert.match(html, /id="exportScale"/i);
+  assert.match(html, /id="autoMatte"/i);
+  assert.match(html, /id="batchFiles"/i);
+  assert.match(html, /id="batchExport"/i);
+  assert.match(html, /id="exportSilhouette"/i);
   assert.match(html, /13os-taskbar\.js/i);
 });
 
@@ -128,7 +136,6 @@ test("normalizes /GLYPHSHIFT to its canonical trailing-slash URL", async () => {
 for (const { slug, title } of [
   { slug: "FORMATKILLER", title: "FORMATKILLER" },
   { slug: "RHYTHMGRID", title: "RHYTHMGRID" },
-  { slug: "BASSLIQUID", title: "BASSLIQUID" },
   { slug: "LOOPFORGE", title: "LOOPFORGE" },
 ]) {
   test("serves "+slug+" from its sealed release bundle", async () => {

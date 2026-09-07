@@ -37,13 +37,26 @@ export default function Home() {
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const seen = window.sessionStorage.getItem("oni-boot-seen") === "true";
+    let seen = false;
+    try { seen = window.sessionStorage.getItem("oni-boot-seen") === "true"; } catch { /* Storage is optional. */ }
     const timer = window.setTimeout(() => {
-      if (!reducedMotion && !seen) window.sessionStorage.setItem("oni-boot-seen", "true");
+      try { if (!reducedMotion && !seen) window.sessionStorage.setItem("oni-boot-seen", "true"); } catch { /* Keep navigation usable. */ }
       setBooting(false);
     }, reducedMotion || seen ? 0 : 3200);
     return () => window.clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const dismiss = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setMenuOpen(false);
+        document.querySelector<HTMLButtonElement>(".start-button")?.focus();
+      }
+    };
+    document.addEventListener("keydown", dismiss);
+    return () => document.removeEventListener("keydown", dismiss);
+  }, [menuOpen]);
 
   useEffect(() => {
     const timer = window.setInterval(() => setClock(localTime()), 1000);
@@ -53,7 +66,7 @@ export default function Home() {
   const workCount = useMemo(() => String(gallery.length).padStart(2, "0"), []);
 
   function completeBoot() {
-    window.sessionStorage.setItem("oni-boot-seen", "true");
+    try { window.sessionStorage.setItem("oni-boot-seen", "true"); } catch { /* Storage is optional. */ }
     setBooting(false);
   }
 
@@ -144,13 +157,13 @@ export default function Home() {
               <li><span>00:13</span>ARCHIVE UPLINK ESTABLISHED</li>
               <li><span>00:13</span>MOTTLE SERVICE AVAILABLE</li>
               <li><span>00:13</span>WALLPAPER TRANSFER QUEUED</li>
-              <li><span>00:13</span>RUDE BOI HOURS ON AIR</li>
+              <li><span>00:13</span>LOCAL TOOLCHAIN READY</li>
             </ol>
           </section>
         </div>
       </section>
 
-      <section className="archive-section" id="archive" aria-labelledby="archive-title">
+      <section className="archive-section" id="archive" aria-label="Render vault">
         <header className="section-header">
           <span>RENDER VAULT // {workCount} FEATURED TRANSMISSIONS</span>
           <button type="button" onClick={() => jump("wallpapers", "WALLPAPER INDEX // OPEN")}>WALLPAPER MODE ↓</button>
@@ -162,7 +175,7 @@ export default function Home() {
           </div>
           <div className="render-index">
             {gallery.map((item, index) => (
-              <button className={`render-row ${item.title === selectedWork.title ? "is-selected" : ""}`} key={item.title} type="button" onClick={() => { setSelectedWork(item); setStatus(`${item.title} // PREVIEW LOADED`); }}>
+              <button aria-pressed={item.title === selectedWork.title} className={`render-row ${item.title === selectedWork.title ? "is-selected" : ""}`} key={item.title} type="button" onClick={() => { setSelectedWork(item); setStatus(`${item.title} // PREVIEW LOADED`); }}>
                 <span>{String(index + 1).padStart(2, "0")}</span><b>{item.title}</b><small>{item.type}</small>
               </button>
             ))}
@@ -170,7 +183,7 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="wallpaper-section" id="wallpapers" aria-labelledby="wallpaper-title">
+      <section className="wallpaper-section" id="wallpapers" aria-label="Wallpaper vault">
         <header className="section-header"><span>WALLPAPER VAULT // FULL-RESOLUTION SOURCE FILES</span><span>NO LOGIN REQUIRED</span></header>
         <div className="wallpaper-grid">
           {gallery.slice(0, 3).map((item) => (
@@ -195,10 +208,10 @@ export default function Home() {
         </nav>
       )}
 
-      <footer className="taskbar" aria-live="polite">
+      <footer className="taskbar">
         <button className="start-button" type="button" onClick={() => setMenuOpen((open) => !open)} aria-expanded={menuOpen}>十三鬼 <span>START</span></button>
         <div className="taskbar-apps"><button type="button" onClick={() => jump("home", "HOME TERMINAL // READY")}>HOME</button><a href="/MOTTLE/">MOTTLE</a><a href="/PIXEL-FORGE/">PIXEL FORGE</a><a href="/GLYPHSHIFT/">GLYPHSHIFT</a></div>
-        <span className="taskbar-status">{status}</span>
+        <span className="taskbar-status" role="status">{status}</span>
         <span className="taskbar-clock">LOCAL {clock}</span>
         <span className="taskbar-user"><img src="/brand/oni-emblem.png" alt="" /> GUEST ACCESS</span>
       </footer>

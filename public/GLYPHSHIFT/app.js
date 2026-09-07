@@ -30,7 +30,7 @@
   function applyViewport(){ const {x,y,zoom}=state.viewport; canvasWrap.style.transform=`translate(${x}px, ${y}px) scale(${zoom})`; }
   function snapshotEditor(){
     const controls={}; document.querySelectorAll("#controls input, #controls select, #controls textarea").forEach(el=>{ if(el.type!=="file") controls[el.id]=el.type==="checkbox"?el.checked:el.value; });
-    return {controls,viewport:{...state.viewport}};
+    return {controls,viewport:{...state.viewport},manualText:state.manualText,textMode:state.textMode};
   }
   function updateHistoryButtons(){ $("undo").disabled=!history.past.length; $("redo").disabled=!history.future.length; }
   function setPlayLabel(label){
@@ -44,8 +44,8 @@
     if(history.current) history.past.push(history.current); if(history.past.length>80) history.past.shift(); history.current=next; history.future=[]; updateHistoryButtons();
   }
   function restoreHistory(snapshot,label){
-    history.restoring=true; Object.entries(snapshot.controls).forEach(([id,value])=>{ const control=$(id); if(control) control.type==="checkbox"?control.checked=value:control.value=value; });
-    state.viewport={...snapshot.viewport}; applyViewport(); $("text-count").textContent=`${ui.customText.value.length.toLocaleString()} CHARACTERS`; setGlyphSize(ui.size.value); syncHardBlackWhite(); state.lastRender=0; state.playing=false; state.completed=false; state.pausedElapsed=0; stopResolveAudio(); history.restoring=false; transport.textContent=`${label} APPLIED`;
+    history.restoring=true; Object.entries(snapshot.controls).forEach(([id,value])=>{ const control=$(id); if(control){if(control.type==="checkbox")control.checked=value;else control.value=value;} });
+    if(snapshot.textMode){enterTextCanvas(snapshot.manualText||"",false);}else{leaveTextCanvas();state.manualText=snapshot.manualText||"";} state.viewport={...snapshot.viewport}; applyViewport(); $("text-count").textContent=`${ui.customText.value.length.toLocaleString()} CHARACTERS`; setGlyphSize(ui.size.value); syncHardBlackWhite(); state.lastRender=0; state.playing=false; state.completed=false; state.pausedElapsed=0; stopResolveAudio(); history.restoring=false; transport.textContent=`${label} APPLIED`;
   }
   function undo(){ if(!history.past.length) return; history.future.push(history.current); history.current=history.past.pop(); restoreHistory(history.current,"UNDO"); updateHistoryButtons(); }
   function redo(){ if(!history.future.length) return; history.past.push(history.current); history.current=history.future.pop(); restoreHistory(history.current,"REDO"); updateHistoryButtons(); }
@@ -462,7 +462,7 @@
     } else if(effect==="particles"){
       const count=Math.floor(25+power*160); for(let i=0;i<count;i++){const px=(seed(i,1)*w+time*(12+seed(i,2)*50))%w,py=(seed(i,3)*h+Math.sin(time+seed(i,4)*8)*12)%h;ctx.globalAlpha=.12+seed(i,5)*power*.7;ctx.fillText("·+*"[Math.floor(seed(i,6)*3)],px,py);}
     } else if(effect==="waveform"){
-      ctx.lineWidth=1;ctx.beginPath(); for(let x=0;x<w;x+=cell){const y=h*.5+Math.sin(x*.025+time*4)*h*.09*power+Math.sin(x*.11-time*7)*h*.025*power; x?ctx.lineTo(x,y):ctx.moveTo(x,y);}ctx.stroke();
+      ctx.lineWidth=1;ctx.beginPath(); for(let x=0;x<w;x+=cell){const y=h*.5+Math.sin(x*.025+time*4)*h*.09*power+Math.sin(x*.11-time*7)*h*.025*power; if(x)ctx.lineTo(x,y);else ctx.moveTo(x,y);}ctx.stroke();
     } else if(effect==="orb"){
       const radius=Math.min(w,h)*(.11+power*.15),cx=w*.83,cy=h*.18; for(let y=-radius;y<=radius;y+=cellH*.8) for(let x=-radius;x<=radius;x+=cell*.75){const d=Math.hypot(x,y)/radius;if(d<1){const z=Math.sqrt(1-d*d),shine=Math.max(0,Math.sin(time*.8)*x/radius+z*.9);ctx.globalAlpha=.12+shine*.7;ctx.fillText(glyph(shine,Math.floor(x/cell),Math.floor(y/cellH)),cx+x,cy+y);}}
     }
@@ -562,40 +562,47 @@
     drawDraftCursor(t,cell,cellH);
     drawBorder(w,h,t); drawPoster(w,h);
   }
-  function load(file){
-    if(!file) return; releaseGifFrames(); if(state.fileURL) URL.revokeObjectURL(state.fileURL); state.fileURL=URL.createObjectURL(file); state.imageReady=false;
-    // Every new source begins as an inspectable still, regardless of any form
-    // values the browser restored from a previous session.
-    leaveTextCanvas(); ui.previewEngine.value="text";
-    ui.mode.value="direct"; ui.effect.value="none"; ui.outputScale.value="100"; ui.aspectRatio.value="source"; ui.outputResolution.value="native"; fitViewport(false); updateReadouts(); state.playing=false; state.completed=false; state.pausedElapsed=0; state.media=null; state.sourceKind=null; state.sourcePlaying=false; state.sourceElapsed=0; state.sourceStarted=0; state.sourceDuration=0; state.sourceScrubbing=false; state.lastRender=0; state.lastSoundStep=-1; state.lastVisibleGlyphs=0; state.generationTicks=0; state.firstTick=true; state.finalTick=false; setPlayLabel("PLAY"); stopResolveAudio(); sourceTimeline.hidden=true;
-    const isVideo=file.type.startsWith("video/") || /\.(mp4|webm|mov|mkv)$/i.test(file.name), isGif=file.type==="image/gif" || /\.gif$/i.test(file.name);
-    const ready=kind=>{ state.imageReady=true; empty.hidden=true; state.playing=false; state.completed=false; state.pausedElapsed=0; state.lastRender=0; state.lastSoundStep=-1; state.lastVisibleGlyphs=0; state.generationTicks=0; state.firstTick=true; state.finalTick=false; setPlayLabel("PLAY"); state.started=performance.now(); resetHistory(); status.textContent=`${kind} // ${file.name.toUpperCase()}`; transport.textContent=playableSource()?"SOURCE PAUSED — PLAY SOURCE OR CHOOSE A BUILD":"STATIC PREVIEW — PICK A STYLE TO ANIMATE"; refreshSourceTimeline(); };
-    status.textContent=`LOADING // ${file.name.toUpperCase()}`;
+  let sourceLoadId=0;
+  function releasePreparedSource(source){if(!source)return;source.media?.pause?.();source.frames?.forEach(frame=>frame.bitmap.close?.());}
+  async function prepareSource(file,url){
+    const isVideo=file.type.startsWith("video/")||/\.(mp4|webm|mov|mkv)$/i.test(file.name),isGif=file.type==="image/gif"||/\.gif$/i.test(file.name);
     if(isVideo){
-      const el=document.createElement("video"); state.media=el; state.sourceKind="video"; el.src=state.fileURL; el.loop=true; el.muted=true; el.preload="auto";
-      el.addEventListener("loadeddata",()=>{el.pause();el.currentTime=0;ready("VIDEO");},{once:true});
-      el.addEventListener("play",()=>{state.sourcePlaying=true;refreshSourceTimeline();});
-      el.addEventListener("pause",()=>{state.sourcePlaying=false;refreshSourceTimeline();});
-      el.addEventListener("error",()=>status.textContent="UNSUPPORTED VIDEO CODEC",{once:true});
-      return;
+      const media=document.createElement("video");media.loop=true;media.muted=true;media.playsInline=true;media.preload="auto";
+      await new Promise((resolve,reject)=>{media.onloadeddata=resolve;media.onerror=()=>reject(Error("Unsupported video codec"));media.src=url});media.onloadeddata=null;media.onerror=null;media.pause();
+      return {media,kind:"video",frames:[],duration:media.duration||0,label:"VIDEO",note:""};
     }
-    if(isGif && "ImageDecoder" in window){
-      (async()=>{
-        try{
-          const decoder=new ImageDecoder({data:await file.arrayBuffer(),type:"image/gif"}); await decoder.tracks.ready;
-          const track=decoder.tracks.selectedTrack, frameCount=Math.min(300,Math.max(1,Number(track.frameCount)||1)); let elapsed=0; const frames=[];
-          for(let index=0;index<frameCount;index++){
-            const decoded=await decoder.decode({frameIndex:index,completeFramesOnly:true}), bitmap=await createImageBitmap(decoded.image), duration=Math.max(.02,(Number(decoded.image.duration)||100000)/1_000_000);
-            decoded.image.close(); elapsed+=duration; frames.push({bitmap,end:elapsed});
-          }
-          state.media=frames[0].bitmap; state.gifFrames=frames; state.sourceKind="gif"; state.sourceDuration=elapsed; ready("GIF");
-        }catch{
-          const image=new Image(); state.media=image; state.sourceKind="image"; image.src=state.fileURL; image.onload=()=>{ready("GIF — NATIVE PLAYBACK");transport.textContent="GIF LOADED — THIS BROWSER COULD NOT EXPOSE A SCRUB TIMELINE";}; image.onerror=()=>status.textContent="UNSUPPORTED GIF";
+    if(isGif&&"ImageDecoder" in window){
+      let decoder=null;const frames=[];
+      try{
+        decoder=new ImageDecoder({data:await file.arrayBuffer(),type:"image/gif"});await decoder.tracks.ready;
+        const fullCount=Math.max(1,Number(decoder.tracks.selectedTrack.frameCount)||1),limit=Math.min(300,fullCount);let elapsed=0,pixels=0;
+        for(let index=0;index<limit;index++){
+          const decoded=await decoder.decode({frameIndex:index,completeFramesOnly:true});
+          const size=decoded.image.displayWidth*decoded.image.displayHeight;
+          if(pixels+size>24000000){decoded.image.close();if(!frames.length)throw Error("GIF frame too large");break;}
+          let bitmap;try{bitmap=await createImageBitmap(decoded.image);elapsed+=Math.max(.02,(Number(decoded.image.duration)||100000)/1_000_000);}finally{decoded.image.close();}
+          pixels+=size;frames.push({bitmap,end:elapsed});
         }
-      })();
-      return;
+        return {media:frames[0].bitmap,kind:"gif",frames,duration:elapsed,label:"GIF",note:frames.length<fullCount?"GIF PREVIEW LIMITED TO FIRST "+frames.length+" FRAMES — ORIGINAL FILE UNCHANGED":""};
+      }catch{frames.forEach(frame=>frame.bitmap.close?.());}finally{decoder?.close();}
     }
-    const image=new Image(); state.media=image; state.sourceKind="image"; image.src=state.fileURL; image.onload=()=>ready(isGif?"GIF — NATIVE PLAYBACK":"IMAGE"); image.onerror=()=>status.textContent="UNSUPPORTED IMAGE";
+    const media=new Image();await new Promise((resolve,reject)=>{media.onload=resolve;media.onerror=()=>reject(Error("Unsupported image"));media.src=url});media.onload=null;media.onerror=null;
+    return {media,kind:"image",frames:[],duration:0,label:isGif?"GIF — NATIVE PLAYBACK":"IMAGE",note:isGif?"GIF LOADED — THIS BROWSER COULD NOT EXPOSE A SCRUB TIMELINE":""};
+  }
+  async function load(file){
+    if(!file)return;const request=++sourceLoadId,url=URL.createObjectURL(file);let prepared=null,committed=false;status.textContent="LOADING // "+file.name.toUpperCase();
+    try{
+      prepared=await prepareSource(file,url);if(request!==sourceLoadId)return;
+      if(state.sourceKind==="video")state.media?.pause();releaseGifFrames();if(state.fileURL)URL.revokeObjectURL(state.fileURL);
+      leaveTextCanvas();ui.previewEngine.value="text";ui.mode.value="direct";ui.effect.value="none";ui.outputScale.value="100";ui.aspectRatio.value="source";ui.outputResolution.value="native";fitViewport(false);updateReadouts();stopResolveAudio();
+      Object.assign(state,{fileURL:url,imageReady:true,media:prepared.media,sourceKind:prepared.kind,gifFrames:prepared.frames,sourceDuration:prepared.duration,sourcePlaying:false,sourceElapsed:0,sourceStarted:0,sourceScrubbing:false,playing:false,completed:false,pausedElapsed:0,lastRender:0,lastSoundStep:-1,lastVisibleGlyphs:0,generationTicks:0,firstTick:true,finalTick:false,started:performance.now()});
+      if(prepared.kind==="video"){
+        prepared.media.addEventListener("play",()=>{if(state.media===prepared.media){state.sourcePlaying=true;refreshSourceTimeline()}});
+        prepared.media.addEventListener("pause",()=>{if(state.media===prepared.media){state.sourcePlaying=false;refreshSourceTimeline()}});
+      }
+      committed=true;empty.hidden=true;sourceTimeline.hidden=true;setPlayLabel("PLAY");resetHistory();status.textContent=prepared.label+" // "+file.name.toUpperCase();transport.textContent=prepared.note||(playableSource()?"SOURCE PAUSED — PLAY SOURCE OR CHOOSE A BUILD":"STATIC PREVIEW — PICK A STYLE TO ANIMATE");refreshSourceTimeline();
+    }catch(err){if(request===sourceLoadId)status.textContent=(err.message||"SOURCE LOAD FAILED")+" — PREVIOUS WORK KEPT";}
+    finally{if(!committed){releasePreparedSource(prepared);URL.revokeObjectURL(url);}}
   }
   function applyCharacterLibrary(name){
     if(name!=="custom" && characterLibraries[name]) ui.charset.value=characterLibraries[name];
@@ -640,7 +647,7 @@
     for(let y=0;y<exportH;y++){
       let line="";
       for(let x=0;x<exportW;x++){
-        const sx=Math.min(state.analyserW-1,Math.floor(x/exportW*state.analyserW)), sy=Math.min(state.analyserH-1,Math.floor(y/exportH*state.analyserH)), i=(sy*state.analyserW+sx)*4, r=data[i],g=data[i+1],b=data[i+2]; const v=textFlowValue(data,sx,sy,mode);
+        const sx=Math.min(state.analyserW-1,Math.floor(x/exportW*state.analyserW)), sy=Math.min(state.analyserH-1,Math.floor(y/exportH*state.analyserH)); const v=textFlowValue(data,sx,sy,mode);
         const useTextFlow=ui.glyphSource.value==="text"&&ui.textLayout.value==="flow"&&v>=.07;
         const flowIndex=useTextFlow?textFlowIndex:null, sourceFlowIndex=flowIndex===null?null:flowIndex-textFlowStart; if(isTextTypewriter&&useTextFlow)textFlowIndex++;
         const shown=isTextTypewriter?(useTextFlow&&flowIndex<typewriterTarget):(mode==="direct" || ["glyph-build","coarse-mosaic","iterative-draft"].includes(mode) || revealFor(sx,sy,v,t,mode)); if(!shown){ line+=" "; continue; }
@@ -658,10 +665,24 @@
   function downloadHTML(){ const text=$("ascii-export").value||currentAsciiText(); $("ascii-export").value=text; const escaped=text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); downloadText("glyphshift-frame.html",`<!doctype html><meta charset="utf-8"><title>GLYPHSHIFT</title><style>body{margin:0;padding:2rem;background:${ui.background.value};color:${ui.foreground.value};font:12px/1 "Courier New",Courier,monospace;white-space:pre;font-kerning:none;font-variant-ligatures:none}</style><pre>${escaped}</pre>`,"text/html"); }
   function downloadMarkdown(){ const text=$("ascii-export").value||currentAsciiText(); $("ascii-export").value=text; downloadText("glyphshift-frame.md",`\`\`\`text\n${text}\n\`\`\``); }
   function downloadANSI(){ const text=$("ascii-export").value||currentAsciiText(); $("ascii-export").value=text; downloadText("glyphshift-frame-ansi.txt",`\u001b[38;2;245;245;245m${text}\u001b[0m`); }
-  async function record(){ if(!state.imageReady||state.recording)return; if(!isAnimated()){ transport.textContent="CHOOSE A BUILD STYLE BEFORE EXPORTING VIDEO"; return; } if(!window.MediaRecorder){transport.textContent="MEDIARECORDER NOT AVAILABLE";return;} state.recording=true; $("record").classList.add("recording"); $("record").textContent="● RECORDING…"; startBuild();
-    const stream=out.captureStream(Number(ui.fps.value)); let audioStream=null; if(ui.resolveSound.value!=="none"){ await algorithmicEngine(); audioStream=algoCapture?.stream; } audioStream?.getAudioTracks().forEach(track=>stream.addTrack(track)); const type=MediaRecorder.isTypeSupported("video/webm;codecs=vp9")?"video/webm;codecs=vp9":"video/webm"; const rec=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:8_000_000}); const chunks=[];
-    rec.ondataavailable=e=>e.data.size&&chunks.push(e.data); rec.onstop=()=>{ const blob=new Blob(chunks,{type});const a=document.createElement("a");a.download="ascii-motion-build.webm";a.href=URL.createObjectURL(blob);a.click();setTimeout(()=>URL.revokeObjectURL(a.href),2000);state.recording=false;$("record").classList.remove("recording");$("record").textContent="● EXPORT BUILD (WEBM)";transport.textContent="WEBM EXPORTED"; };
-    rec.start(); setTimeout(()=>rec.stop(),clipDuration()*1000);
+  async function record(){
+    if(!state.imageReady||state.recording)return;
+    if(!isAnimated()){transport.textContent="CHOOSE A BUILD STYLE BEFORE EXPORTING VIDEO";return;}
+    const candidates=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4"];
+    const type=window.MediaRecorder&&candidates.find(mime=>MediaRecorder.isTypeSupported(mime));
+    if(!type||typeof out.captureStream!=="function"){transport.textContent="VIDEO EXPORT NOT SUPPORTED IN THIS BROWSER";return;}
+    let stream=null,rec=null,timer=0;const chunks=[];
+    state.recording=true;$("record").classList.add("recording");$("record").textContent="● RECORDING…";
+    try{
+      stream=out.captureStream(Number(ui.fps.value));
+      if(ui.resolveSound.value!=="none"){await algorithmicEngine();algoCapture?.stream.getAudioTracks().forEach(track=>stream.addTrack(track.clone()));}
+      rec=new MediaRecorder(stream,{mimeType:type,videoBitsPerSecond:8_000_000});
+      const finished=new Promise((resolve,reject)=>{rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};rec.onstop=resolve;rec.onerror=()=>reject(Error("Recorder failed"));});
+      rec.start();startBuild();timer=setTimeout(()=>{if(rec.state!=="inactive")rec.stop()},clipDuration()*1000);await finished;
+      if(!chunks.length)throw Error("No video frames recorded");
+      const blob=new Blob(chunks,{type:rec.mimeType||type}),url=URL.createObjectURL(blob),a=document.createElement("a");a.download="ascii-motion-build."+(type.startsWith("video/mp4")?"mp4":"webm");a.href=url;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);transport.textContent="VIDEO EXPORTED";
+    }catch(err){transport.textContent="VIDEO EXPORT FAILED — "+(err.message||"TRY ANOTHER FORMAT/BROWSER");}
+    finally{clearTimeout(timer);if(rec&&rec.state!=="inactive"){try{rec.stop()}catch{}}stream?.getTracks().forEach(track=>track.stop());state.recording=false;$("record").classList.remove("recording");$("record").textContent="● EXPORT BUILD (VIDEO)";}
   }
   fileInput.onchange=e=>{ load(e.target.files[0]); e.target.value=""; };
   $("choose-file").onclick=()=>fileInput.click();
@@ -752,7 +773,7 @@
   };
   liveText.addEventListener("input",()=>{
     if(!state.textMode) return;
-    state.manualText=readTextCanvas(); $("ascii-export").value=""; transport.textContent=`TEXT CANVAS — ${state.manualText.length.toLocaleString()} CHARACTERS`;
+    state.manualText=readTextCanvas(); $("ascii-export").value=""; commitHistory(); transport.textContent=`TEXT CANVAS — ${state.manualText.length.toLocaleString()} CHARACTERS`;
   });
   ui.audioLevel.oninput=()=>{ if(state.playing&&ui.resolveSound.value==="algorithmic") syncResolveAudio(); };
   const updateTextCount=()=>$("text-count").textContent=`${ui.customText.value.length.toLocaleString()} CHARACTERS`;
@@ -773,7 +794,7 @@
   window.addEventListener("keydown",e=>{
     if(e.target.matches("input, textarea, select, [contenteditable='true']")) return;
     if(e.code==="Space" && !e.target.matches("button")){ e.preventDefault(); $("play").click(); return; }
-    if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==="z"){ e.preventDefault(); e.shiftKey?redo():undo(); }
+    if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==="z"){ e.preventDefault(); if(e.shiftKey)redo();else undo(); }
     if(e.altKey&&e.key==="ArrowLeft"){ e.preventDefault(); undo(); }
     if(e.altKey&&e.key==="ArrowRight"){ e.preventDefault(); redo(); }
   });

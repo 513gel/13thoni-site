@@ -1504,7 +1504,7 @@
         <button class="primary" id="gifBtn">Export GIF</button>
         <button class="primary" id="vidBtn">Export Video</button>
       </div>
-      <div class="note" id="gifnote">GIFs and videos are split into frames automatically — every frame gets the full pipeline. GIFs keep their original timing; videos sample the first 30s at 12fps. Touch the FPS dial to override timing. Export Video records to MP4 or WebM depending on your browser (audio is dropped).</div>
+      <div class="note" id="gifnote">GIFs and videos are split into frames automatically — every frame gets the full pipeline. GIFs keep their original timing. Videos cover the full duration, with resolution and sampling rate reduced as needed to stay within the frame-memory budget. Touch the FPS dial to override timing. Export Video records to MP4 or WebM depending on your browser (audio is dropped).</div>
     </div>
   </section>
 
@@ -1624,13 +1624,14 @@
 /* ================= settings / storage ================= */
 const store = {
   m:{},
-  get(k){ try{ return localStorage.getItem(k) ?? this.m[k] ?? null; }catch(e){ return this.m[k] ?? null; } },
-  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} this.m[k]=v; },
+  get(k){ if(Object.hasOwn(this.m,k))return this.m[k];try{return localStorage.getItem(k)}catch(e){return null} },
+  set(k,v){ this.m[k]=v;try{localStorage.setItem(k,v);return true}catch(e){return false} },
 };
+function storedJSON(key,fallback){try{return JSON.parse(store.get(key)||"null")??fallback}catch{return fallback}}
 const prefersReduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SET = {
   theme: store.get("dd_theme") || "dark",
-  custom: JSON.parse(store.get("dd_custom") || '{"bg":"#000000","panel":"#0a0a0b","fg":"#f5f5f2","acc":"#e60012"}'),
+  custom: Object.fromEntries(Object.entries({bg:"#000000",panel:"#0a0a0b",fg:"#f5f5f2",acc:"#e60012"}).map(([key,fallback])=>{const value=storedJSON("dd_custom",{})?.[key];return [key,typeof value==="string"&&/^#[0-9a-f]{6}$/i.test(value)?value:fallback]})),
   boot:  store.get("dd_boot") !== "0",
   slock: store.get("dd_slock") !== "0",
 };
@@ -3871,7 +3872,7 @@ function render(frame=0){
   if(out.height!==H) out.height=H;
   octx.imageSmoothingEnabled=false;
   octx.drawImage(src,0,0,out.width,out.height);
-  if(splitOn&&S.img) drawSplit(frame);
+  if(!renderingExport&&splitOn&&S.img) drawSplit(frame);
   if(typeof applyZoom==="function"&&zoomF>0) applyZoom();
   $("dims").textContent=`${out.width}×${out.height}`;
   if(typeof renderMaskOverlay==="function")renderMaskOverlay();
@@ -4065,7 +4066,8 @@ function fname(ext){
   store.set("dd_fname",n);
   return n+"."+ext;
 }
-async function exportGIF(){
+async function exportGIF(){try{return await exportGIFFrames()}catch(err){statusMessage("GIF export failed: "+err.message,4000)}finally{renderingExport=false;$("gifBtn").disabled=$("gifBtn2").disabled=false;scheduleRender()}}
+async function exportGIFFrames(){
   if(!S.img) return;
   stopPreview();
   renderingExport=true;
@@ -4116,7 +4118,8 @@ async function exportGIF(){
   render(0);
 }
 
-async function exportVideo(){
+async function exportVideo(){try{return await recordVideoFrames()}catch(err){statusMessage("Video export failed: "+err.message,4000)}finally{renderingExport=false;$("vidBtn").disabled=$("vidBtn2").disabled=false;scheduleRender()}}
+async function recordVideoFrames(){
   if(!S.img) return;
   stopPreview();
   renderingExport=true;
@@ -4143,10 +4146,12 @@ async function exportVideo(){
   const loops=Math.max(1,Math.ceil(2000/cycleMs));      /* record at least ~2s */
   const fpsGuess=clamp(Math.round(nf*loops*1000/(cycleMs*loops||1)),1,30);
   const stream=out.captureStream(fpsGuess);
-  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});
+  let rec;try{
+  rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:8000000});
   const chunks=[];
   rec.ondataavailable=e=>{ if(e.data&&e.data.size) chunks.push(e.data); };
-  const stopped=new Promise(res=>rec.onstop=res);
+  const stopped=new Promise((res,rej)=>{rec.onstop=res;rec.onerror=()=>rej(Error("Recorder failed"))});
+  stopped.catch(()=>{});
   rec.start(200);
   const total=nf*loops;
   for(let i=0;i<total;i++){
@@ -4166,9 +4171,11 @@ async function exportVideo(){
   $("vidBtn").disabled=$("vidBtn2").disabled=false;
   renderingExport=false;
   render(0);
+  }finally{if(rec&&rec.state!=="inactive"){try{rec.stop()}catch{}}stream.getTracks().forEach(track=>track.stop())}
 }
 
-function exportSVG(){
+function exportSVG(){renderingExport=true;try{return exportSVGFrame()}catch(err){statusMessage("SVG export failed: "+err.message,4000)}finally{captureVec=false;renderingExport=false;scheduleRender()}}
+function exportSVGFrame(){
   if(!S.img) return;
   const vecAlgos=["halftone","stipple","cmyk"];
   if(!vecAlgos.includes(S.algo)){
@@ -4415,6 +4422,7 @@ async function estimateVideoFPS(video){
     callback=video.requestVideoFrameCallback(tick);setTimeout(finish,1800);try{await video.play();}catch(_){finish();}
   });
 }
+function videoSampleCount(duration,sourceFPS,maxFrames){return Math.max(1,Math.min(maxFrames,Math.ceil(duration*sourceFPS)))}
 function ingestVideoFull(file){
   const url=URL.createObjectURL(file),v=document.createElement("video");v.muted=true;v.playsInline=true;v.preload="auto";
   v.onerror=()=>{statusMessage("Could not decode that video",3500);URL.revokeObjectURL(url);};
@@ -4424,7 +4432,7 @@ function ingestVideoFull(file){
     const pixelBudget=2.4e7,maxPreview=720,baseScale=Math.min(1,maxPreview/Math.max(v.videoWidth,v.videoHeight));let w=Math.max(2,Math.round(v.videoWidth*baseScale)),h=Math.max(2,Math.round(v.videoHeight*baseScale));
     const wanted=Math.max(1,Math.ceil(dur*sourceFPS)),budgetScale=Math.min(1,Math.sqrt(pixelBudget/(w*h*wanted)));
     if(budgetScale<1){const minScale=Math.min(1,240/Math.max(w,h)),s=Math.max(minScale,budgetScale);w=Math.max(2,Math.round(w*s));h=Math.max(2,Math.round(h*s));}
-    const maxFrames=Math.max(1,Math.floor(pixelBudget/(w*h))),sampleFPS=Math.max(.5,Math.min(sourceFPS,maxFrames/dur)),n=Math.max(1,Math.ceil(dur*sampleFPS)),step=dur/n;
+    const maxFrames=Math.max(1,Math.floor(pixelBudget/(w*h))),n=videoSampleCount(dur,sourceFPS,maxFrames),sampleFPS=n/dur,step=dur/n;
     const tmp=document.createElement("canvas");tmp.width=w;tmp.height=h;const ctx=tmp.getContext("2d"),canv=[],delays=[],delayCs=Math.max(1,Math.round(step*100));
     for(let i=0;i<n;i++){const time=Math.min(dur-.001,i*step);$("status").textContent=`Importing full video: ${formatClock(time)} / ${formatClock(dur)}`;await seekVideoFrame(v,time);ctx.drawImage(v,0,0,w,h);canv.push(toCanvas(tmp,w,h));delays.push(delayCs);}
     if(S.img)pushUndo();Object.assign(S,DEFAULTS);S.fx=[];S.masks=[];S.temporalModules=[];S.srcKind="VID";S.sourceFPS=sourceFPS;S.sampleFPS=sampleFPS;S.fps=clamp(Math.round(sampleFPS),1,60);S.fpsTouched=false;setFrames(canv,delays,true);syncUI();
@@ -4434,6 +4442,7 @@ function ingestVideoFull(file){
 function loadStillFile(file){
   const url=URL.createObjectURL(file);
   const img=new Image();
+  img.onerror=()=>{URL.revokeObjectURL(url);statusMessage("Image could not decode — current source kept",3500)};
   img.onload=()=>{
     if(S.img) pushUndo();
     Object.assign(S,DEFAULTS); S.fx=[]; S.masks=[];
@@ -5143,7 +5152,7 @@ const PRESETS = {
   "Redline 3D":{algo:"rings",palette:"gray16",scale:2,pscale:2,filter:"bleachbypass",fx:[{type:"anaglyph",a:50,b:55,stage:"out"}]},
 };
 /* slider locks: locked keys survive shuffle and presets */
-const LOCKS=new Set(JSON.parse(store.get("dd_locks")||"[]"));
+const savedLocks=storedJSON("dd_locks",[]);const LOCKS=new Set(Array.isArray(savedLocks)?savedLocks.filter(v=>typeof v==="string"):[]);
 const LOCKABLE=["algo","scale","detail","smooth","dotcell","pscale","thbias","dotShape","dotJitter","algoB","dualCross","palette","autoN","filter",
   "bright","contrast","lvBlack","lvWhite","gamma","sat","hue","exposure","shadows","highlights","anim","fps","nframes"];
 function injectLocks(){
@@ -5191,7 +5200,7 @@ function applyPresetObj(p){
 
 /* user presets — persisted via storage when hosted */
 let UP={};
-try{ UP=JSON.parse(store.get("dd_userpresets")||"{}"); }catch(e){ UP={}; }
+UP=storedJSON("dd_userpresets",{});if(!UP||typeof UP!=="object"||Array.isArray(UP))UP={};UP=Object.fromEntries(Object.entries(UP).filter(([,value])=>value&&typeof value==="object"&&!Array.isArray(value)));
 function renderUserPresets(){
   const grid=$("userPresetGrid"); grid.innerHTML="";
   const names=Object.keys(UP);
@@ -5234,7 +5243,7 @@ renderUserPresets();
 /* ================= custom palette builder ================= */
 let PB=["#0a0a0b","#f5f5f2"];
 let UPAL={};
-try{ UPAL=JSON.parse(store.get("dd_userpal")||"{}"); }catch(e){ UPAL={}; }
+UPAL=storedJSON("dd_userpal",{});if(!UPAL||typeof UPAL!=="object"||Array.isArray(UPAL))UPAL={};UPAL=Object.fromEntries(Object.entries(UPAL).filter(([,value])=>Array.isArray(value)&&value.length>=2&&value.length<=256&&value.every(color=>typeof color==="string"&&/^#[0-9a-f]{6}$/i.test(color))));
 function upalId(name){ return "up_"+name.toLowerCase().replace(/[^a-z0-9]+/g,"-"); }
 function registerUserPalettes(){
   const old=document.getElementById("upalGroup");
@@ -5412,35 +5421,16 @@ $("shuffle").addEventListener("click",()=>{
 });
 
 /* ================= export / share ================= */
-function savePNG(){
-  if(!S.img) return;
-  stopPreview(); renderingExport=true; render(0);
-  const a=document.createElement("a");
-  a.download=fname("png"); a.href=out.toDataURL("image/png"); a.click();
-  renderingExport=false; scheduleRender();
+function cleanExportCanvas(){
+  if(!S.img)throw Error("Attach a source first");
+  const previous=renderingExport;stopPreview();renderingExport=true;
+  try{render(0);return toCanvas(out,out.width,out.height)}finally{renderingExport=previous;scheduleRender()}
 }
-$("save").addEventListener("click",savePNG);
-$("quickSave").addEventListener("click",savePNG);
-$("copy").addEventListener("click",async()=>{
-  if(!S.img) return;
-  try{
-    const blob=await new Promise(r=>out.toBlob(r,"image/png"));
-    await navigator.clipboard.write([new ClipboardItem({"image/png":blob})]);
-    $("status").textContent="copied"; setTimeout(()=>$("status").textContent="",1200);
-  }catch(err){ $("status").textContent="copy blocked — use Export"; setTimeout(()=>$("status").textContent="",2500); }
-});
-$("share").addEventListener("click",async()=>{
-  if(!S.img) return;
-  try{
-    const blob=await new Promise(r=>out.toBlob(r,"image/png"));
-    const file=new File([blob],fname("png"),{type:"image/png"});
-    if(navigator.canShare&&navigator.canShare({files:[file]})){
-      await navigator.share({files:[file],title:"MOTTLE"});
-    } else {
-      $("status").textContent="share not supported here"; setTimeout(()=>$("status").textContent="",2500);
-    }
-  }catch(err){ /* user cancelled */ }
-});
+function cleanPNGBlob(){const canvas=cleanExportCanvas();return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error("PNG encoding failed")),"image/png"))}
+function savePNG(){if(!S.img)return;try{const canvas=cleanExportCanvas(),a=document.createElement("a");a.download=fname("png");a.href=canvas.toDataURL("image/png");a.click()}catch(err){statusMessage("PNG export failed: "+err.message,4000)}}
+$("save").addEventListener("click",savePNG);$("quickSave").addEventListener("click",savePNG);
+$("copy").addEventListener("click",async()=>{if(!S.img)return;try{await navigator.clipboard.write([new ClipboardItem({"image/png":cleanPNGBlob()})]);statusMessage("Full-quality image copied")}catch(err){statusMessage("Copy blocked — use Export PNG",3500)}});
+$("share").addEventListener("click",async()=>{if(!S.img)return;try{const blob=await cleanPNGBlob(),file=new File([blob],fname("png"),{type:"image/png"});if(navigator.canShare&&navigator.canShare({files:[file]}))await navigator.share({files:[file],title:"MOTTLE"});else statusMessage("Sharing is not supported here — use Export PNG",3500)}catch(err){if(err.name!=="AbortError")statusMessage("Share failed — use Export PNG",3500)}});
 $("filtStage").addEventListener("click",()=>{
   pushUndo();
   S.filterStage = S.filterStage==="out" ? "pre" : "out";
@@ -5985,13 +5975,14 @@ function renderTemporalList(){
   let drag=-1;list.ondragstart=e=>{if(!e.target.classList.contains("drag")){e.preventDefault();return;}drag=+e.target.closest(".temporal-card")?.dataset.i;e.dataTransfer.effectAllowed="move";};list.ondragover=e=>{if(drag>=0)e.preventDefault();};list.ondrop=e=>{e.preventDefault();const c=e.target.closest(".temporal-card");if(!c||drag<0)return;const to=+c.dataset.i;if(to!==drag){pushUndo();const [v]=S.temporalModules.splice(drag,1);S.temporalModules.splice(to,0,v);renderTemporalList();scheduleRender();autosaveProject();}drag=-1;};
 }
 
+function readProcedures(){const data=storedJSON("mottle_procedures_v2",[]);return Array.isArray(data)?data.filter(p=>p&&typeof p.name==="string"&&Array.isArray(p.operations)&&Array.isArray(p.temporal)&&p.operations.every(v=>v&&typeof v==="object")&&p.temporal.every(v=>v&&typeof v==="object")):[]}
 function saveProcedure(name,operations,temporal){
-  let all=[];try{all=JSON.parse(store.get("mottle_procedures_v2")||"[]");}catch(_){all=[];}
+  let all=readProcedures();
   all.push({id:Date.now(),name:(name||"Untitled Procedure").slice(0,48),created:new Date().toISOString(),operations:JSON.parse(JSON.stringify(operations)),temporal:JSON.parse(JSON.stringify(temporal))});
   store.set("mottle_procedures_v2",JSON.stringify(all.slice(-100)));statusMessage("Preset saved");renderProcedureLibrary();
 }
 function renderProcedureLibrary(){
-  const host=$("procedureLibrary");if(!host)return;let all=[];try{all=JSON.parse(store.get("mottle_procedures_v2")||"[]");}catch(_){ }
+  const host=$("procedureLibrary");if(!host)return;let all=readProcedures();
   host.innerHTML=all.slice().reverse().map((p,i)=>`<button data-proc="${all.length-1-i}" title="Apply saved preset">${esc(p.name)}</button>`).join("")||`<span class="note">No saved presets yet.</span>`;
   host.onclick=e=>{const b=e.target.closest("[data-proc]");if(!b)return;const p=all[+b.dataset.proc];pushUndo();for(const raw of p.operations||[]){const o=normalizeOperation(raw);o.id=fxUid++;S.fx.push(o);}for(const raw of p.temporal||[]){const m=normalizeTemporal(raw);m.id=temporalUid++;S.temporalModules.push(m);}renderFxList();renderTemporalList();scheduleRender();autosaveProject();};
 }
@@ -6008,14 +5999,44 @@ function archiveSession(){
   try{const obj=projectObject(true),json=JSON.stringify(obj);downloadBlob(new Blob([json],{type:"application/json"}),fname("mottle"));statusMessage("Project saved");}
   catch(err){statusMessage("Project save failed: "+err.message,4000);}
 }
-function imageFromData(url){return new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(toCanvas(im,im.naturalWidth,im.naturalHeight));im.onerror=reject;im.src=url;});}
-async function loadProjectObject(raw){
-  const p=raw&&raw.format==="mottle"?raw:{format:"mottle",schemaVersion:1,settings:raw.settings||raw,operations:raw.fx||[],temporalModules:raw.temporalModules||[],globalMasks:raw.masks||[]};
-  pushUndo();for(const k of Object.keys(DEFAULTS))if(p.settings&&p.settings[k]!==undefined)S[k]=p.settings[k];S.fx=(p.operations||p.fx||[]).map(normalizeOperation);S.temporalModules=(p.temporalModules||[]).map(normalizeTemporal);S.masks=p.globalMasks||p.masks||[];S.reusableMasks=p.reusableMasks||[];fxUid=Math.max(fxUid,...S.fx.map(x=>(+x.id||0)+1),0);temporalUid=Math.max(temporalUid,...S.temporalModules.map(x=>(+x.id||0)+1),0);
-  if(p.source?.kind==="still"&&p.source.data){const c=await imageFromData(p.source.data);setStill(c,true);}else if(p.source?.kind==="frames"){const frames=[];for(const u of p.source.frames||[])if(u)frames.push(await imageFromData(u));if(frames.length)setFrames(frames,p.source.delays||[],true);}
-  syncUI();renderFxList();renderTemporalList();renderProcedureLibrary();classifyLayout();updateTimeline();scheduleRender();autosaveProject();statusMessage(p.schemaVersion<2?"Older project updated to the current format":"Project opened");
+function imageFromData(url){return new Promise((resolve,reject)=>{
+  if(typeof url!=="string"||!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(url)){reject(Error("Project media must be embedded image data"));return}
+  const im=new Image();im.onload=()=>{if(!im.naturalWidth||!im.naturalHeight||im.naturalWidth*im.naturalHeight>24000000){reject(Error("Project image exceeds safe dimensions"));return}resolve(toCanvas(im,im.naturalWidth,im.naturalHeight))};im.onerror=()=>reject(Error("Project image could not decode"));im.src=url;
+})}
+function validateMottleProject(raw){
+  const object=v=>v&&typeof v==="object"&&!Array.isArray(v);
+  if(!object(raw))throw Error("Invalid project");
+  const p=raw.format==="mottle"?raw:{format:"mottle",schemaVersion:1,settings:raw.settings||raw,operations:raw.fx||[],temporalModules:raw.temporalModules||[],globalMasks:raw.masks||[]};
+  if(p.schemaVersion>2)throw Error("This project needs a newer Mottle version");
+  if(p.settings!==undefined&&!object(p.settings))throw Error("Invalid settings");
+  const settings={...DEFAULTS};
+  for(const [key,fallback] of Object.entries(DEFAULTS)){const value=p.settings?.[key];if(value===undefined)continue;if(typeof value!==typeof fallback||(typeof value==="number"&&!Number.isFinite(value)))throw Error("Invalid setting: "+key);const control=$(key);if(control?.tagName==="SELECT"&&![...control.options].some(o=>o.value===value))throw Error("Unsupported setting: "+key);if(typeof value==="number"&&control?.type==="range"&&((control.min!==""&&value<Number(control.min))||(control.max!==""&&value>Number(control.max))))throw Error("Setting out of range: "+key);settings[key]=value;}
+  if(settings.scale<1||settings.scale>64||settings.fps<=0||settings.fps>120||!Number.isInteger(settings.nframes)||settings.nframes<1||settings.nframes>10000)throw Error("Invalid dimensions or timing");
+  for(const key of ["fg","bg"])if(!/^#[0-9a-f]{6}$/i.test(settings[key]))throw Error("Invalid color");
+  const list=(value,name)=>{if(value===undefined)return [];if(!Array.isArray(value)||value.length>1000||!value.every(object))throw Error("Invalid "+name);return value};
+  const operations=list(p.operations||p.fx,"operations").map((o,i)=>{if(typeof o.type!=="string"||!Object.hasOwn(FXDEF,o.type))throw Error("Unknown operation");return normalizeOperation({...o,id:Number.isInteger(o.id)?o.id:i})});
+  const temporal=list(p.temporalModules,"motion modules").map((m,i)=>{if(typeof m.type!=="string"||!Object.hasOwn(TEMPDEF,m.type)||m.links!==undefined&&!Array.isArray(m.links))throw Error("Invalid motion module");return normalizeTemporal({...m,id:Number.isInteger(m.id)?m.id:i})});
+  const masks=list(p.globalMasks||p.masks,"masks").map(normalizeMask),reusableMasks=list(p.reusableMasks,"reusable masks");
+  if(p.source!==null&&p.source!==undefined&&(!object(p.source)||!["still","frames"].includes(p.source.kind)))throw Error("Invalid source");
+  if(p.source?.kind==="frames"&&(!Array.isArray(p.source.frames)||!p.source.frames.length||p.source.frames.length>10000||!Array.isArray(p.source.delays)||p.source.delays.length!==p.source.frames.length||!p.source.delays.every(n=>Number.isFinite(n)&&n>0)))throw Error("Invalid source frames or timing");
+  return {settings,operations,temporal,masks,reusableMasks,source:p.source,schemaVersion:p.schemaVersion||1,fpsTouched:!!p.settings?.fpsTouched};
 }
-function autosaveProject(){clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{try{store.set("mottle_recovery_v2",JSON.stringify(projectObject(false)));const e=$("recoveryStatus");if(e)e.textContent="Recovery snapshot saved "+new Date().toLocaleTimeString();}catch(_){ }},500);}
+let projectRestoreId=0;
+async function loadProjectObject(raw){
+  const request=++projectRestoreId,prepared=validateMottleProject(raw);let image=null,frames=null;
+  if(prepared.source?.kind==="still")image=await imageFromData(prepared.source.data);
+  else if(prepared.source?.kind==="frames"){frames=[];let pixels=0;for(const data of prepared.source.frames){const c=await imageFromData(data);pixels+=c.width*c.height;if(pixels>24000000)throw Error("Project media exceeds safe memory limit");frames.push(c)}image=frames[0];}
+  if(request!==projectRestoreId)return;
+  const previous={...S},oldFxUid=fxUid,oldTemporalUid=temporalUid;
+  try{
+    pushUndo();Object.assign(S,prepared.settings,{fx:prepared.operations,temporalModules:prepared.temporal,masks:prepared.masks,reusableMasks:prepared.reusableMasks});
+    fxUid=Math.max(fxUid,...S.fx.map(x=>x.id+1),0);temporalUid=Math.max(temporalUid,...S.temporalModules.map(x=>x.id+1),0);
+    if(frames)setFrames(frames,prepared.source.delays,true);else if(image)setStill(image,true);
+    Object.assign(S,prepared.settings);S.fpsTouched=prepared.fpsTouched;
+    syncUI();renderFxList();renderTemporalList();renderProcedureLibrary();classifyLayout();updateTimeline();scheduleRender();autosaveProject();statusMessage(prepared.source?"Project opened":"Settings restored — current source kept");
+  }catch(err){Object.assign(S,previous);fxUid=oldFxUid;temporalUid=oldTemporalUid;syncUI();renderFxList();renderTemporalList();updateTimeline();scheduleRender();throw err;}
+}
+function autosaveProject(){clearTimeout(autosaveTimer);autosaveTimer=setTimeout(()=>{const e=$("recoveryStatus");try{const saved=store.set("mottle_recovery_v2",JSON.stringify(projectObject(false)));if(e)e.textContent=saved?"Settings saved "+new Date().toLocaleTimeString()+" — source media is not included":"Settings held for this session only — storage unavailable. Archive Session to keep source media.";}catch{if(e)e.textContent="Settings could not save. Archive Session to keep your work."}},500);}
 function updateTimeline(){const dock=$("timelineDock");if(!dock)return;const active=(S.temporalModules||[]).some(m=>m.enabled)||S.frames;dock.classList.toggle("active",!!active);document.documentElement.style.setProperty("--timeline-height",active?"52px":"0px");const range=$("masterTimeline");range.max=Math.max(0,totalFrames()-1);$("timelineCount").textContent=`${(+range.value+1)||1} / ${totalFrames()}`;}
 function classifyLayout(){
   const root=document.documentElement,override=store.get("mottle_layout_override")||S.layoutOverride||"auto";root.classList.remove("layout-mobile","layout-tablet","layout-compact-desktop","layout-desktop","landscape");
@@ -6091,8 +6112,8 @@ function upgradeWorkspaceUI(){
   }
 }$("fxSearch").addEventListener("input",e=>{const q=e.target.value.toLowerCase();for(const o of $("fxsel").options)o.hidden=!o.textContent.toLowerCase().includes(q);const first=Array.from($("fxsel").options).find(o=>!o.hidden);if(first)$("fxsel").value=first.value;});fxCard.querySelector(".note").textContent="Operations execute by stage: PRE before dithering, OVR over the dithered signal, OUT at final output. Drag to reorder; move buttons remain available on touch devices.";
   const motionCard=pages[5].querySelector(".card");motionCard.insertAdjacentHTML("beforebegin",`<div class="card"><h3>Add Temporal Module</h3><div class="row"><select id="temporalSelect" aria-label="Temporal module browser">${Object.entries(TEMPDEF).map(([v,d])=>`<option value="${v}">${esc(d.category)} / ${esc(d.n)}</option>`).join("")}</select><button id="temporalAdd" style="flex:0 0 auto">+ Add Module</button></div><div id="temporalList"></div></div>`);motionCard.querySelector("h3").textContent="Timeline & Release";$("anim").closest(".row").style.display="none";if(S.anim!=="off"&&!S.temporalModules.length){S.temporalModules.push(normalizeTemporal({type:S.anim}));S.anim="off";}$("temporalAdd").onclick=()=>{pushUndo();const m=normalizeTemporal({type:$("temporalSelect").value});S.temporalModules.push(m);selectedTemporalId=m.id;renderTemporalList();updateTimeline();scheduleRender();autosaveProject();};
-  const exportCard=pages[6].querySelector(".card");exportCard.insertAdjacentHTML("beforeend",`<div class="op-section"><h3>Projects</h3><div class="btnrow"><button id="archiveSession" class="primary">Archive Session (.mottle)</button><button id="restoreSession">Restore Session</button><input id="projectInput" type="file" accept=".mottle,application/json" class="hidden"></div><div class="note">Projects include source media, Signal Operations, Isolation Fields, Temporal Modules, timing, seeds, and settings.</div></div>`);$("archiveSession").onclick=archiveSession;$("restoreSession").onclick=()=>$("projectInput").click();$("projectInput").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{await loadProjectObject(JSON.parse(await file.text()));}catch(err){statusMessage("Could not restore project: "+err.message,5000);}e.target.value="";};
-  const sys=pages[7];sys.insertAdjacentHTML("afterbegin",`<div class="card"><h3>Adaptive Workspace</h3><div class="row"><label class="small" for="layoutOverride">Layout</label><select id="layoutOverride"><option value="auto">Automatic</option><option value="mobile">Mobile</option><option value="tablet">Tablet</option><option value="compact-desktop">Compact Desktop</option><option value="desktop">Desktop</option></select></div><div class="row"><label class="small">Preview</label><select id="previewQuality"><option value="draft">Draft</option><option value="balanced">Balanced</option><option value="high">High</option></select></div><div class="note">Layout uses viewport, orientation, pointer precision, and touch capability. Override is remembered on this device.</div></div><div class="card"><h3>Browser Capabilities</h3><div class="cap-grid">${featureRows()}</div><div class="note">Release Copy only offers codecs supported by this browser; safe fallbacks remain available.</div></div><div class="card"><h3>Recovery & Procedures</h3><div id="recoveryStatus" class="note">Recovery snapshot ready</div><div class="btnrow"><button id="recoverNow">Restore Recovery</button><button id="saveCombinedProcedure">Save Stack as Procedure</button></div><div id="procedureLibrary" class="grid2"></div></div>`);$("layoutOverride").value=store.get("mottle_layout_override")||S.layoutOverride;$("layoutOverride").onchange=e=>{S.layoutOverride=e.target.value;store.set("mottle_layout_override",e.target.value);classifyLayout();autosaveProject();};$("previewQuality").value=S.previewQuality;$("previewQuality").onchange=e=>{S.previewQuality=e.target.value;scheduleRender();autosaveProject();};$("recoverNow").onclick=async()=>{try{const p=JSON.parse(store.get("mottle_recovery_v2")||"null");if(!p)throw Error("No recovery snapshot");await loadProjectObject(p);}catch(err){statusMessage(err.message);}};$("saveCombinedProcedure").onclick=()=>saveProcedure(prompt("Procedure name:")||"Combined Procedure",S.fx,S.temporalModules);
+  const exportCard=pages[6].querySelector(".card");exportCard.insertAdjacentHTML("beforeend",`<div class="op-section"><h3>Projects</h3><div class="btnrow"><button id="archiveSession" class="primary">Archive Session (.mottle)</button><button id="restoreSession">Restore Session</button><input id="projectInput" type="file" accept=".mottle,application/json" class="hidden"></div><div class="note">Projects include source media, Signal Operations, Isolation Fields, Temporal Modules, timing, seeds, and settings.</div></div>`);$("archiveSession").onclick=archiveSession;$("restoreSession").onclick=()=>$("projectInput").click();$("projectInput").onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(file.size>256000000)throw Error("Project file is too large");await loadProjectObject(JSON.parse(await file.text()));}catch(err){statusMessage("Could not restore project: "+err.message,5000);}e.target.value="";};
+  const sys=pages[7];sys.insertAdjacentHTML("afterbegin",`<div class="card"><h3>Adaptive Workspace</h3><div class="row"><label class="small" for="layoutOverride">Layout</label><select id="layoutOverride"><option value="auto">Automatic</option><option value="mobile">Mobile</option><option value="tablet">Tablet</option><option value="compact-desktop">Compact Desktop</option><option value="desktop">Desktop</option></select></div><div class="row"><label class="small">Preview</label><select id="previewQuality"><option value="draft">Draft</option><option value="balanced">Balanced</option><option value="high">High</option></select></div><div class="note">Layout uses viewport, orientation, pointer precision, and touch capability. Override is remembered on this device.</div></div><div class="card"><h3>Browser Capabilities</h3><div class="cap-grid">${featureRows()}</div><div class="note">Release Copy only offers codecs supported by this browser; safe fallbacks remain available.</div></div><div class="card"><h3>Recovery & Procedures</h3><div id="recoveryStatus" class="note">Settings recovery only — source media is not saved</div><div class="btnrow"><button id="recoverNow">Restore Settings on Current Source</button><button id="saveCombinedProcedure">Save Stack as Procedure</button></div><div id="procedureLibrary" class="grid2"></div></div>`);$("layoutOverride").value=store.get("mottle_layout_override")||S.layoutOverride;$("layoutOverride").onchange=e=>{S.layoutOverride=e.target.value;store.set("mottle_layout_override",e.target.value);classifyLayout();autosaveProject();};$("previewQuality").value=S.previewQuality;$("previewQuality").onchange=e=>{S.previewQuality=e.target.value;scheduleRender();autosaveProject();};$("recoverNow").onclick=async()=>{try{const p=JSON.parse(store.get("mottle_recovery_v2")||"null");if(!p)throw Error("No saved settings");if(!S.img)throw Error("Open the source first, then restore its saved settings. Recovery does not include media.");await loadProjectObject(p);}catch(err){statusMessage(err.message);}};$("saveCombinedProcedure").onclick=()=>saveProcedure(prompt("Procedure name:")||"Combined Procedure",S.fx,S.temporalModules);
   document.body.insertAdjacentHTML("beforeend",`<div id="timelineDock"><button id="timelinePlay">PLAY</button><button id="timelineStop">STOP</button><span class="time-readout" id="timelineTime">00:00:00.00</span><input id="masterTimeline" type="range" min="0" max="0" value="0" aria-label="Animation timeline"><span class="time-readout" id="timelineCount">1 / 1</span></div><div id="inspectorResize" aria-hidden="true"></div><div id="commandPalette" class="hidden"><div class="palette-box"><input id="commandSearch" type="text" placeholder="Search commands..." aria-label="Command palette"><div id="commandResults"></div></div></div>`);$("timelinePlay").onclick=()=>$("previewBtn").click();$("timelineStop").onclick=stopPreview;$("masterTimeline").oninput=e=>{const f=+e.target.value;render(f);$("timelineTime").textContent=new Date(f/Math.max(1,S.fps)*1000).toISOString().slice(11,22);updateTimeline();};$("commandSearch").oninput=e=>renderCommands(e.target.value);$("commandPalette").onclick=e=>{if(e.target===$("commandPalette"))$("commandPalette").classList.add("hidden");};
   const resize=$("inspectorResize");resize.onpointerdown=e=>{resize.setPointerCapture(e.pointerId);resize.onpointermove=ev=>{const maxW=Math.max(420,Math.min(560,innerWidth-360));const w=clamp(innerWidth-ev.clientX,420,maxW);document.documentElement.style.setProperty("--inspector-width",w+"px");store.set("mottle_inspector_width",w);};resize.onpointerup=()=>resize.onpointermove=null;};
   addEventListener("resize",classifyLayout,{passive:true});classifyLayout();renderTemporalList();renderProcedureLibrary();updateTimeline();

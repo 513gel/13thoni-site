@@ -13,6 +13,9 @@ const isCodexSeatbeltSandbox = process.env.CODEX_SANDBOX === "seatbelt";
 
 const localBindingConfig = {
   main: "./worker/index.ts",
+  // Authorization and retired routes must run before matching public assets.
+  assets: { binding: "ASSETS", run_worker_first: true },
+  ratelimits: [{ name: "REVIEW_RATE_LIMITER", namespace_id: "1001", simple: { limit: 5, period: 60 as const } }],
   compatibility_flags: ["nodejs_compat"],
   d1_databases: d1
     ? [
